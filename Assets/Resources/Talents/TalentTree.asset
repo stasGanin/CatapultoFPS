@@ -1,0 +1,102 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cf4dfedddb6d8b42976fcd9a8f76690, type: 3}
+  m_Name: TalentTree
+  m_EditorClassIdentifier: Assembly-CSharp::TalentTree
+  _nodes:
+  - _id: firepower
+    _displayName: Firepower
+    _description: +10% damage per rank.
+    _branch: Warrior
+    _depth: 0
+    _stat: 0
+    _valuePerRank: 0.1
+    _maxRank: 3
+    _prerequisiteIds: []
+  - _id: arcane_reserve
+    _displayName: Arcane Reserve
+    _description: +20 max mana per rank.
+    _branch: Warrior
+    _depth: 1
+    _stat: 2
+    _valuePerRank: 20
+    _maxRank: 3
+    _prerequisiteIds:
+    - firepower
+  - _id: overcharge
+    _displayName: Overcharge
+    _description: +15% damage per rank.
+    _branch: Warrior
+    _depth: 2
+    _stat: 0
+    _valuePerRank: 0.15
+    _maxRank: 2
+    _prerequisiteIds:
+    - arcane_reserve
+  - _id: toughness
+    _displayName: Toughness
+    _description: +20 max HP per rank.
+    _branch: Survival
+    _depth: 0
+    _stat: 1
+    _valuePerRank: 20
+    _maxRank: 3
+    _prerequisiteIds: []
+  - _id: gourmand
+    _displayName: Gourmand
+    _description: +25% healing from food per rank.
+    _branch: Survival
+    _depth: 1
+    _stat: 4
+    _valuePerRank: 0.25
+    _maxRank: 2
+    _prerequisiteIds:
+    - toughness
+  - _id: regeneration
+    _displayName: Regeneration
+    _description: +1 HP/s out of combat per rank.
+    _branch: Survival
+    _depth: 2
+    _stat: 5
+    _valuePerRank: 1
+    _maxRank: 3
+    _prerequisiteIds:
+    - gourmand
+  - _id: swift
+    _displayName: Swift
+    _description: +5% move speed per rank.
+    _branch: Explorer
+    _depth: 0
+    _stat: 3
+    _valuePerRank: 0.05
+    _maxRank: 3
+    _prerequisiteIds: []
+  - _id: fast_learner
+    _displayName: Fast Learner
+    _description: +15% XP from fruits per rank.
+    _branch: Explorer
+    _depth: 1
+    _stat: 6
+    _valuePerRank: 0.15
+    _maxRank: 3
+    _prerequisiteIds:
+    - swift
+  - _id: sprinter
+    _displayName: Sprinter
+    _description: +8% move speed per rank.
+    _branch: Explorer
+    _depth: 2
+    _stat: 3
+    _valuePerRank: 0.08
+    _maxRank: 2
+    _prerequisiteIds:
+    - fast_learner

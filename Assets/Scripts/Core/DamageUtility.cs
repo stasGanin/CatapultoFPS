@@ -39,6 +39,8 @@ public static class DamageUtility
 
         // У взрыва точка удара общая для всех целей: цифры привязываем к самой цели, чтобы не слипались.
         Vector3 labelAt = numberPoint ?? point;
+        if (fromPlayer)
+            amount *= PlayerTalents.Multiplier(TalentStat.Damage);
 
         var chunk = col.GetComponentInParent<CastleWallChunk>();
         if (chunk != null && !chunk.IsDetached)

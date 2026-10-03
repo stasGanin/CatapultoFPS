@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 /// <summary>
 /// Craft window (C). List + detail card, same parchment language as inventory.
-/// Hotkeys: C / Esc close · click recipe · Enter craft · Tab category.
+/// Hotkeys: C / Esc close · click recipe · Enter craft · Q category.
 /// </summary>
 [DefaultExecutionOrder(-10)]
 public sealed class CraftUI : MonoBehaviour
@@ -94,7 +94,8 @@ public sealed class CraftUI : MonoBehaviour
         if (kb == null)
             return;
 
-        if (kb.tabKey.wasPressedThisFrame)
+        // Tab занят меню игрока — категории листаем на Q.
+        if (kb.qKey.wasPressedThisFrame)
             CycleCategory();
         if (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame)
             TryCraft();
@@ -154,6 +155,7 @@ public sealed class CraftUI : MonoBehaviour
             case CraftStation.Workbench: return "Workbench";
             case CraftStation.Smelter: return "Smelter";
             case CraftStation.Kitchen: return "Kitchen";
+            case CraftStation.XpPress: return "Essence Press";
             default: return "Craft";
         }
     }
@@ -433,7 +435,7 @@ public sealed class CraftUI : MonoBehaviour
         BuildDetail(panel.transform);
 
         _hint = CreateText(panel.transform,
-            "Tab category  ·  ↑↓ recipe  ·  +/− qty  ·  Enter craft  ·  Esc close",
+            "Q category  ·  ↑↓ recipe  ·  +/− qty  ·  Enter craft  ·  Esc close",
             13, TextAnchor.MiddleCenter);
         // В шапке справа от заголовка: снизу внутри рамки места нет — там кончается список рецептов.
         PinTop(_hint.rectTransform, 280f, 100f, 156f, 26f);

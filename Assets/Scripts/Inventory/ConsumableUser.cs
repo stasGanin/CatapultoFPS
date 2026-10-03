@@ -11,6 +11,7 @@ public sealed class ConsumableUser : MonoBehaviour
     [SerializeField] PlayerInputReader _input;
     [SerializeField] PlayerInventory _inventory;
     [SerializeField] PlayerHealth _health;
+    PlayerProgression _progression;
 
     readonly Dictionary<ItemDefinition, float> _cooldownEnd = new Dictionary<ItemDefinition, float>();
 
@@ -119,7 +120,13 @@ public sealed class ConsumableUser : MonoBehaviour
     void Apply(ItemDefinition item)
     {
         if (item.HealAmount > 0f)
-            _health.Heal(item.HealAmount);
+            _health.Heal(item.HealAmount * PlayerTalents.Multiplier(TalentStat.HealingPower));
+        if (item.XpAmount > 0)
+        {
+            if (_progression == null)
+                _progression = GetComponent<PlayerProgression>();
+            _progression?.AddXp(item.XpAmount);
+        }
         if (item.CooldownSeconds > 0f)
             _cooldownEnd[item] = Time.time + item.CooldownSeconds;
     }

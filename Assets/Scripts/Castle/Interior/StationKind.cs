@@ -5,5 +5,6 @@ public enum StationKind
     Smelter = 1,
     ResearchTable = 2,
     Chest = 3,
-    Kitchen = 4
+    Kitchen = 4,
+    XpPress = 5
 }

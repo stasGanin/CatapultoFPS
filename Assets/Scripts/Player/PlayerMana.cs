@@ -9,7 +9,7 @@ public sealed class PlayerMana : MonoBehaviour
 
     float _mana;
 
-    public float MaxMana => _maxMana;
+    public float MaxMana => _maxMana + PlayerTalents.FlatBonus(TalentStat.MaxMana);
     public float Mana => _mana;
     public bool IsEmpty => _mana <= 0.01f;
 
@@ -22,10 +22,11 @@ public sealed class PlayerMana : MonoBehaviour
 
     void Update()
     {
-        if (_mana >= _maxMana || _regenPerSecond <= 0f)
+        float max = MaxMana;
+        if (_mana >= max || _regenPerSecond <= 0f)
             return;
-        _mana = Mathf.Min(_maxMana, _mana + _regenPerSecond * Time.deltaTime);
-        ManaChanged?.Invoke(_mana, _maxMana);
+        _mana = Mathf.Min(max, _mana + _regenPerSecond * Time.deltaTime);
+        ManaChanged?.Invoke(_mana, max);
     }
 
     public bool CanAfford(float amount) => amount <= 0f || _mana + 0.001f >= amount;

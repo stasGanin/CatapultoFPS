@@ -23,6 +23,8 @@ public class ItemDefinition : ScriptableObject
     [SerializeField, Min(0f)] float _cooldownSeconds;
     [Tooltip("Сколько длится использование (анимация поедания), сек.")]
     [SerializeField, Min(0f)] float _useDuration;
+    [Tooltip("Опыт героя за использование (плоды опыта).")]
+    [SerializeField, Min(0)] int _xpAmount;
 
     public string Id => _id;
     public string DisplayName => _displayName;
@@ -35,6 +37,7 @@ public class ItemDefinition : ScriptableObject
     public float HealAmount => _healAmount;
     public float CooldownSeconds => _cooldownSeconds;
     public float UseDuration => _useDuration;
+    public int XpAmount => _xpAmount;
     public bool IsEquippableTool =>
         _kind == ItemKind.HandCannon || _kind == ItemKind.Pickaxe || _kind == ItemKind.Crossbow
         || _kind == ItemKind.Staff || _kind == ItemKind.Scattergun || _kind == ItemKind.EmberLauncher;

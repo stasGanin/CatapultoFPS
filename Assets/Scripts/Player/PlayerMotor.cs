@@ -50,7 +50,7 @@ public class PlayerMotor : MonoBehaviour
             move.Normalize();
 
         float speed = _input.SprintHeld ? _config.SprintSpeed : _config.WalkSpeed;
-        move *= speed;
+        move *= speed * PlayerTalents.Multiplier(TalentStat.MoveSpeed);
 
         if (_input.JumpPressed && grounded)
             _verticalVelocity = Mathf.Sqrt(_config.JumpHeight * -2f * _config.Gravity);

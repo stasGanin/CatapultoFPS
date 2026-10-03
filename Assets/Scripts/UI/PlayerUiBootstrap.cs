@@ -59,6 +59,17 @@ public sealed class PlayerUiBootstrap : MonoBehaviour
             gameObject.AddComponent<PlayerRecipeBook>();
         if (GetComponent<ResearchUI>() == null)
             gameObject.AddComponent<ResearchUI>();
+        // Порядок важен: каждый следующий компонент в Awake берёт предыдущие через GetComponent.
+        if (GetComponent<PlayerProgression>() == null)
+            gameObject.AddComponent<PlayerProgression>();
+        if (GetComponent<PlayerTalents>() == null)
+            gameObject.AddComponent<PlayerTalents>();
+        if (GetComponent<TalentsUI>() == null)
+            gameObject.AddComponent<TalentsUI>();
+        if (GetComponent<PlayerMenuController>() == null)
+            gameObject.AddComponent<PlayerMenuController>();
+        if (GetComponent<PlayerMenuTabBar>() == null)
+            gameObject.AddComponent<PlayerMenuTabBar>();
         GameSettings.EnsureLoaded();
 
         // Prefer scene GameUI if present; otherwise rebuild on the player (runtime fallbacks).

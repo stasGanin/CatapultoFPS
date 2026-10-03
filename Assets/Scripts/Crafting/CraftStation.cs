@@ -4,5 +4,6 @@ public enum CraftStation
     Hand = 0,
     Workbench = 1,
     Smelter = 2,
-    Kitchen = 3
+    Kitchen = 3,
+    XpPress = 4
 }

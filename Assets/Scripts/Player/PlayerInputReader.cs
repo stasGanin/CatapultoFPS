@@ -14,6 +14,7 @@ public class PlayerInputReader : MonoBehaviour
     public bool AttackHeld { get; private set; }
     public bool InventoryTogglePressed { get; private set; }
     public bool CraftMenuPressed { get; private set; }
+    public bool PlayerMenuPressed { get; private set; }
     public bool BuildMenuPressed { get; private set; }
     public bool CancelPressed { get; private set; }
     public bool SecondaryPressed { get; private set; }
@@ -35,6 +36,7 @@ public class PlayerInputReader : MonoBehaviour
         Vector2 move = Vector2.zero;
         InventoryTogglePressed = false;
         CraftMenuPressed = false;
+        PlayerMenuPressed = false;
         BuildMenuPressed = false;
         CancelPressed = false;
         SecondaryPressed = false;
@@ -56,6 +58,7 @@ public class PlayerInputReader : MonoBehaviour
             SprintHeld = kb.leftShiftKey.isPressed;
             InventoryTogglePressed = kb.iKey.wasPressedThisFrame;
             CraftMenuPressed = kb.cKey.wasPressedThisFrame;
+            PlayerMenuPressed = kb.tabKey.wasPressedThisFrame;
             BuildMenuPressed = kb.bKey.wasPressedThisFrame;
             CancelPressed = kb.escapeKey.wasPressedThisFrame;
             InteractPressed = kb.eKey.wasPressedThisFrame;
