@@ -508,22 +508,14 @@ public static class CarcassKit
         return b;
     }
 
+    /// <summary>
+    /// Габариты в локальных осях модуля по 8 углам каждого меша. Через мировой AABB нельзя:
+    /// модуль к этому моменту уже повёрнут вместе с замком, и коробка коллайдера раздувалась.
+    /// </summary>
     static Bounds EncapsulateLocal(GameObject go)
     {
-        var rends = go.GetComponentsInChildren<Renderer>(true);
-        if (rends.Length == 0)
-            return new Bounds(Vector3.up * 1.68f, new Vector3(1f, 3.36f, 6f));
-
-        Bounds b = new Bounds(go.transform.InverseTransformPoint(rends[0].bounds.center), Vector3.zero);
-        for (int i = 0; i < rends.Length; i++)
-        {
-            Bounds wb = rends[i].bounds;
-            Vector3 min = go.transform.InverseTransformPoint(wb.min);
-            Vector3 max = go.transform.InverseTransformPoint(wb.max);
-            b.Encapsulate(min);
-            b.Encapsulate(max);
-        }
-
-        return b;
+        if (TryLocalMeshBounds(go, out Bounds local))
+            return local;
+        return new Bounds(Vector3.up * 1.68f, new Vector3(1f, 3.36f, 6f));
     }
 }
