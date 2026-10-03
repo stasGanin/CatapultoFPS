@@ -56,7 +56,7 @@ public sealed class EnemyTowerFire : MonoBehaviour
         {
             Vector3 aim = EnemySenses.PlayerAimPoint();
             if ((aim - origin).sqrMagnitude <= range * range
-                && EnemySenses.HasClearPath(origin, aim, 0.18f, _tower.Castle.transform, player))
+                && EnemySenses.HasClearPath(origin, aim, _shotConfig.ProjectileRadius, _tower.Castle.transform, player))
             {
                 point = aim;
                 return true;
@@ -68,6 +68,9 @@ public sealed class EnemyTowerFire : MonoBehaviour
             return false;
         Vector3 center = EnemySenses.CastleCenter(castle.transform);
         if ((center - origin).sqrMagnitude > range * range)
+            return false;
+        // Холм или чужое строение на линии — не стреляем: ядро всё равно взорвалось бы о них.
+        if (!EnemySenses.HasClearPath(origin, center, _shotConfig.ProjectileRadius, _tower.Castle.transform, castle.transform))
             return false;
 
         point = center;
