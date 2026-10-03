@@ -5,7 +5,8 @@ public enum CastleBuildMode
 {
     Closed = 0,
     Menu = 1,
-    Placing = 2
+    Placing = 2,
+    Demolish = 3
 }
 
 /// <summary>
@@ -19,6 +20,9 @@ public sealed class CastleBuildController : MonoBehaviour
     [SerializeField] CastleModuleMenuUI _menuUi;
     [SerializeField] ItemDefinition _stoneItem;
     [SerializeField] float _snapRange = 28f;
+    [Tooltip("Доля стоимости модуля, которая возвращается камнем при сносе.")]
+    [SerializeField, Range(0f, 1f)] float _demolishRefund = 0.5f;
+    [SerializeField] float _demolishRange = 8f;
 
     CastleBuildMode _mode = CastleBuildMode.Closed;
     CastleModuleDefinition _selected;
@@ -28,12 +32,16 @@ public sealed class CastleBuildController : MonoBehaviour
     int _snapY;
     int _snapZ;
     bool _hasSectionSnap;
+    CarcassBay _demolishTarget;
+    static readonly Color DemolishTint = new Color(1f, 0.3f, 0.25f, 1f);
     static Material _ghostOk;
     static Material _ghostBad;
 
     public CastleBuildMode Mode => _mode;
     public bool IsMenuOpen => _mode == CastleBuildMode.Menu;
     public bool IsPlacing => _mode == CastleBuildMode.Placing;
+    /// <summary>Подсказка под прицелом в режиме сноса; null — ничего не показываем.</summary>
+    public static string DemolishPrompt { get; private set; }
     public bool BlocksWeapons => _mode != CastleBuildMode.Closed;
     public bool BlocksLook => _mode == CastleBuildMode.Menu;
 
@@ -62,6 +70,8 @@ public sealed class CastleBuildController : MonoBehaviour
 
         if (_mode == CastleBuildMode.Placing)
             TickPlacing();
+        else if (_mode == CastleBuildMode.Demolish)
+            TickDemolish();
     }
 
     void HandleHotkeys()
@@ -117,6 +127,91 @@ public sealed class CastleBuildController : MonoBehaviour
 
         if (_input.AttackPressed)
             TryPlace();
+    }
+
+    public void SelectDemolish()
+    {
+        _selected = null;
+        DestroyGhost();
+        ClearHighlight();
+        _menuUi?.Show(false);
+        SetMode(CastleBuildMode.Demolish);
+        ApplyCursor();
+    }
+
+    void TickDemolish()
+    {
+        if (_input.SecondaryPressed)
+        {
+            OpenMenu();
+            return;
+        }
+
+        SetDemolishTarget(FindDemolishTarget());
+        DemolishPrompt = _demolishTarget != null
+            ? $"[LMB] Demolish {_demolishTarget.Occupant} (+{RefundFor(_demolishTarget.Occupant)} stone)"
+            : "Aim at a wall, window or door";
+        if (_demolishTarget != null && _input.AttackPressed)
+            Demolish(_demolishTarget);
+    }
+
+    /// <summary>Только модули стен (стена/окно/дверь) своего замка, точно под прицелом.</summary>
+    CarcassBay FindDemolishTarget()
+    {
+        Ray ray = _camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        if (!Physics.Raycast(ray, out RaycastHit hit, _demolishRange, ~0, QueryTriggerInteraction.Ignore))
+            return null;
+        var bay = hit.collider.GetComponentInParent<CarcassBay>();
+        if (bay == null || bay.IsEmpty)
+            return null;
+        var castle = bay.GetComponentInParent<CarcassCastle>();
+        return castle != null && castle.IsPlayerOwned ? bay : null;
+    }
+
+    void SetDemolishTarget(CarcassBay bay)
+    {
+        if (bay == _demolishTarget)
+            return;
+        TintModule(_demolishTarget, false);
+        _demolishTarget = bay;
+        TintModule(_demolishTarget, true);
+    }
+
+    void Demolish(CarcassBay bay)
+    {
+        int refund = RefundFor(bay.Occupant);
+        Vector3 fxPoint = bay.transform.position + Vector3.up * 1.2f;
+        _demolishTarget = null;
+        bay.ClearModule();
+        if (refund > 0)
+            _inventory.TryAddItem(_stoneItem, refund);
+        HitSparkVfx.PlayDust(fxPoint, bay.transform.right, 18);
+        DemolishPrompt = null;
+    }
+
+    int RefundFor(CastleModuleKind kind)
+    {
+        var definition = _menuUi != null ? _menuUi.FindDefinition(kind) : null;
+        return definition != null ? Mathf.FloorToInt(definition.StoneCost * _demolishRefund) : 0;
+    }
+
+    static void TintModule(CarcassBay bay, bool on)
+    {
+        if (bay == null || bay.Module == null)
+            return;
+        var block = new MaterialPropertyBlock();
+        foreach (var r in bay.Module.GetComponentsInChildren<Renderer>())
+        {
+            if (!on)
+            {
+                r.SetPropertyBlock(null);
+                continue;
+            }
+
+            block.SetColor("_BaseColor", DemolishTint);
+            block.SetColor("_Color", DemolishTint);
+            r.SetPropertyBlock(block);
+        }
     }
 
     public void OpenMenu()
@@ -340,6 +435,8 @@ public sealed class CastleBuildController : MonoBehaviour
 
     void ClearHighlight()
     {
+        SetDemolishTarget(null);
+        DemolishPrompt = null;
         if (_highlightedBay != null)
             _highlightedBay.SetPreviewHidden(false);
         _highlightedBay = null;

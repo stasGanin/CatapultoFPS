@@ -130,6 +130,8 @@ public sealed class CastleModuleMenuUI : MonoBehaviour
             if (_modules[i] != null)
                 CreateIcon(gridGo.transform, _modules[i]);
         }
+
+        CreateDemolishIcon(gridGo.transform);
     }
 
     void CreateIcon(Transform parent, CastleModuleDefinition def)
@@ -163,6 +165,42 @@ public sealed class CastleModuleMenuUI : MonoBehaviour
             if (_controller == null)
                 _controller = FindFirstObjectByType<CastleBuildController>();
             _controller?.SelectModule(captured);
+        });
+    }
+
+    public CastleModuleDefinition FindDefinition(CastleModuleKind kind)
+    {
+        if (_modules == null)
+            _modules = LoadBuildableModules();
+        for (int i = 0; i < _modules.Length; i++)
+        {
+            if (_modules[i] != null && _modules[i].Kind == kind)
+                return _modules[i];
+        }
+
+        return null;
+    }
+
+    void CreateDemolishIcon(Transform parent)
+    {
+        var go = new GameObject("demolish", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        go.transform.SetParent(parent, false);
+        var img = go.GetComponent<Image>();
+        img.color = new Color(0.62f, 0.2f, 0.16f, 1f);
+
+        var name = CreateText(go.transform, "Demolish", 13, TextAnchor.MiddleCenter);
+        var nrt = name.rectTransform;
+        nrt.anchorMin = Vector2.zero;
+        nrt.anchorMax = Vector2.one;
+        nrt.sizeDelta = Vector2.zero;
+
+        var btn = go.GetComponent<Button>();
+        btn.targetGraphic = img;
+        btn.onClick.AddListener(() =>
+        {
+            if (_controller == null)
+                _controller = FindFirstObjectByType<CastleBuildController>();
+            _controller?.SelectDemolish();
         });
     }
 

@@ -48,6 +48,8 @@ public sealed class InteractPromptUI : MonoBehaviour
             text = $"[E]  {_interactor.LookTarget.InteractLabel}";
         if (!string.IsNullOrEmpty(RepairKitTool.AimPrompt))
             text = RepairKitTool.AimPrompt;
+        if (!string.IsNullOrEmpty(CastleBuildController.DemolishPrompt))
+            text = CastleBuildController.DemolishPrompt;
 
         SetVisible(!string.IsNullOrEmpty(text), text);
     }
