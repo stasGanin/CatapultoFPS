@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -32,6 +33,7 @@ public class PickaxeTool : MonoBehaviour
     CharacterController _selfController;
     bool _equipped;
     float _heavyReadyTime;
+    readonly HashSet<MineableDebris> _minedScratch = new HashSet<MineableDebris>();
 
     public bool IsEquipped => _equipped;
     /// <summary>Заряд сильного удара 0..1; 1 = можно бить.</summary>
@@ -122,8 +124,26 @@ public class PickaxeTool : MonoBehaviour
             return;
 
         _heavyReadyTime = Time.time + _heavyCooldown;
+        MineDebrisInRadius(hit.point);
         // Своего игрока исключаем из радиуса; враги и стены получают урон как от взрыва.
         DamageUtility.ApplyInRadius(hit.point, _heavyRadius, _heavyDamage, hit.normal, gameObject);
+    }
+
+    /// <summary>Обломки в радиусе добываются как киркой (камень + бонус), а не просто разбиваются.</summary>
+    void MineDebrisInRadius(Vector3 center)
+    {
+        var colliders = Physics.OverlapSphere(center, _heavyRadius, ~0, QueryTriggerInteraction.Ignore);
+        _minedScratch.Clear();
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            var debris = colliders[i].GetComponentInParent<MineableDebris>();
+            if (debris == null || !_minedScratch.Add(debris))
+                continue;
+
+            Vector3 point = DamageUtility.ClosestPoint(colliders[i], center);
+            debris.TryMine(Mathf.CeilToInt(_heavyDamage), _stoneItem, _stonePerDebris, _lootPickupRadius,
+                point, (point - center).normalized, LootMultiplier);
+        }
     }
 
     bool TryRaycastTarget(out RaycastHit hit)

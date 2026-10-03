@@ -17,6 +17,8 @@ public class MineableDebris : MonoBehaviour, IDamageable
     const float WeaponLootPickupRadius = 2f;
 
     int _hp;
+    // Destroy откладывается до конца кадра: без флага два удара в один кадр дадут двойной дроп.
+    bool _isSpent;
 
     public ItemDefinition LootItem => _lootItem;
     public int LootCount => Mathf.Max(1, _lootCount);
@@ -51,13 +53,15 @@ public class MineableDebris : MonoBehaviour, IDamageable
         Vector3 hitNormal,
         float lootMultiplier = 1f)
     {
-        if (damage <= 0 || !isActiveAndEnabled)
+        if (damage <= 0 || !isActiveAndEnabled || _isSpent)
             return false;
 
         HitSparkVfx.Play(hitPoint, hitNormal);
         _hp -= damage;
         if (_hp > 0)
             return true;
+
+        _isSpent = true;
 
         ItemDefinition drop = _lootItem != null ? _lootItem : fallbackItem;
         int baseCount = _lootItem != null ? LootCount : Mathf.Max(1, fallbackCount);
@@ -72,12 +76,14 @@ public class MineableDebris : MonoBehaviour, IDamageable
     /// <summary>Урон оружием: кусок просто разбивается, камень «по умолчанию» даёт только кирка.</summary>
     public void ApplyDamage(float amount, in DamageInfo info)
     {
-        if (amount <= 0f || !isActiveAndEnabled)
+        if (amount <= 0f || !isActiveAndEnabled || _isSpent)
             return;
 
         _hp -= Mathf.CeilToInt(amount);
         if (_hp > 0)
             return;
+
+        _isSpent = true;
 
         if (_lootItem != null)
             WorldLootPickup.Spawn(_lootItem, LootCount, GetDebrisCenter(), WeaponLootPickupRadius);
