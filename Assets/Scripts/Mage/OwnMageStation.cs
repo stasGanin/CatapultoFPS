@@ -28,6 +28,8 @@ public sealed class OwnMageStation : MonoBehaviour, IPlayerInteractable
     float _baseIntensity;
 
     public static OwnMageStation OpenStation => _open;
+    /// <summary>The player's mage, for HUD. One own castle at a time.</summary>
+    public static OwnMageStation Active { get; private set; }
     public bool IsOpen => _openFlag;
     public float Satiety => _satiety;
     public float MaxSatiety => _maxSatiety;
@@ -92,6 +94,8 @@ public sealed class OwnMageStation : MonoBehaviour, IPlayerInteractable
     {
         return (transform.position - worldPos).sqrMagnitude <= InteractRange * InteractRange;
     }
+
+    public string InteractLabel => "Mage";
 
     public bool CanInteract() => isActiveAndEnabled;
 
@@ -243,8 +247,12 @@ public sealed class OwnMageStation : MonoBehaviour, IPlayerInteractable
         Cursor.visible = false;
     }
 
+    void OnEnable() => Active = this;
+
     void OnDisable()
     {
+        if (Active == this)
+            Active = null;
         if (_openFlag)
             Close();
     }

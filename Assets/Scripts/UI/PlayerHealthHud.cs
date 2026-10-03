@@ -105,9 +105,7 @@ public sealed class PlayerHealthHud : MonoBehaviour
         var canvas = canvasGo.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 45;
-        var scaler = canvasGo.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        UiScale.Configure(canvasGo.AddComponent<CanvasScaler>());
 
         var panel = new GameObject("HpPanel", typeof(RectTransform));
         panel.transform.SetParent(canvasGo.transform, false);

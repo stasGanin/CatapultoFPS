@@ -20,6 +20,7 @@ public sealed class StorageContainer : MonoBehaviour, IInventorySlots, ICastleMo
 
     public int SlotCount => _slots != null ? _slots.Length : 0;
     public string DisplayName => _displayName;
+    public string InteractLabel => _displayName;
     public float InteractRange => _interactRange;
     public bool IsOperational => !_destroyed;
     public bool IsDestroyed => _destroyed;

@@ -49,6 +49,10 @@ public sealed class PlayerUiBootstrap : MonoBehaviour
             gameObject.AddComponent<WorldMapUI>();
         if (GetComponent<SettingsMenuUI>() == null)
             gameObject.AddComponent<SettingsMenuUI>();
+        if (GetComponent<DamageFeedbackUI>() == null)
+            gameObject.AddComponent<DamageFeedbackUI>();
+        if (GetComponent<CombatHud>() == null)
+            gameObject.AddComponent<CombatHud>();
         GameSettings.EnsureLoaded();
 
         // Prefer scene GameUI if present; otherwise rebuild on the player (runtime fallbacks).

@@ -101,9 +101,7 @@ public sealed class EnemySpawnDebugHud : MonoBehaviour
         var canvas = canvasGo.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 40;
-        var scaler = canvasGo.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        UiScale.Configure(canvasGo.AddComponent<CanvasScaler>());
         canvasGo.AddComponent<GraphicRaycaster>();
 
         var go = new GameObject("SpawnToggle", typeof(RectTransform));

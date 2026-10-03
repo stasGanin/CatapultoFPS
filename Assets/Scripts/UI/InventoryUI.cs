@@ -300,8 +300,7 @@ public class InventoryUI : MonoBehaviour
         var canvas = canvasGo.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 100;
-        canvasGo.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        canvasGo.GetComponent<CanvasScaler>().referenceResolution = new Vector2(1920f, 1080f);
+        UiScale.Configure(canvasGo.AddComponent<CanvasScaler>());
         canvasGo.AddComponent<GraphicRaycaster>();
 
         _dragLayer = new GameObject("DragLayer", typeof(RectTransform)).transform;

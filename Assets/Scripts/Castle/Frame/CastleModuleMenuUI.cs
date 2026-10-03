@@ -79,9 +79,7 @@ public sealed class CastleModuleMenuUI : MonoBehaviour
         var canvas = _canvasGo.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 210;
-        var scaler = _canvasGo.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        UiScale.Configure(_canvasGo.AddComponent<CanvasScaler>());
         _canvasGo.AddComponent<GraphicRaycaster>();
 
         _root = new GameObject("Panel", typeof(RectTransform));

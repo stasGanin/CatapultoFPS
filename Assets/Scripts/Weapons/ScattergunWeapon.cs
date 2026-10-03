@@ -19,6 +19,7 @@ public sealed class ScattergunWeapon : MonoBehaviour
     Vector3 _viewLocal;
     ItemDefinition _ammo;
 
+    public ItemDefinition Ammo => _ammo;
     public GameObject ViewModelObject => _viewModel != null ? _viewModel.gameObject : null;
 
     void Awake()

@@ -177,7 +177,8 @@ public class PlayerInventory : MonoBehaviour, IInventorySlots
         if (_input.CancelPressed && _menuOpen)
             CloseMenuAndStorage();
 
-        if (_input.HotbarSlotPressed >= 0)
+        // Цифры не листают хотбар под открытым меню/паузой.
+        if (_input.HotbarSlotPressed >= 0 && !BlocksLook)
             SelectHotbar(_input.HotbarSlotPressed);
 
         if (_input.HotbarScrollDelta != 0 && !_menuOpen)

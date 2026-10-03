@@ -96,12 +96,16 @@ public sealed class SettingsMenuUI : MonoBehaviour
         if (_inventory.IsMenuOpen || _inventory.IsCraftOpen || _inventory.IsMageOpen || WorldMapUI.IsOpen)
             return true;
 
+        if (_inventory.IsFurniturePlacing)
+            return true;
+
+        // Учитываем и режим установки: иначе Esc одновременно отменяет призрак и ставит паузу.
         var building = _inventory.GetComponent<BuildingController>();
-        if (building != null && building.enabled && building.IsMenuOpen)
+        if (building != null && building.enabled && building.BlocksWeapons)
             return true;
 
         var castle = _inventory.GetComponent<CastleBuildController>();
-        return castle != null && castle.IsMenuOpen;
+        return castle != null && castle.BlocksWeapons;
     }
 
     public void Open()
@@ -178,9 +182,7 @@ public sealed class SettingsMenuUI : MonoBehaviour
         var canvas = canvasGo.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 200;
-        var scaler = canvasGo.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        UiScale.Configure(canvasGo.AddComponent<CanvasScaler>());
         canvasGo.AddComponent<GraphicRaycaster>();
 
         _root = new GameObject("SettingsRoot", typeof(RectTransform));

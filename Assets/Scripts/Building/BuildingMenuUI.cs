@@ -167,9 +167,7 @@ public sealed class BuildingMenuUI : MonoBehaviour
         var canvas = _canvasGo.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 200;
-        var scaler = _canvasGo.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        UiScale.Configure(_canvasGo.AddComponent<CanvasScaler>());
         _canvasGo.AddComponent<GraphicRaycaster>();
 
         _root = CreatePanel(_canvasGo.transform, "BuildPanel",

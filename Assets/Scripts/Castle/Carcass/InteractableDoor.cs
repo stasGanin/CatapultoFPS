@@ -52,6 +52,8 @@ public sealed class InteractableDoor : MonoBehaviour, IPlayerInteractable
         _leaf.localRotation = Quaternion.Slerp(_closed, _open, eased);
     }
 
+    public string InteractLabel => _isOpen ? "Close door" : "Open door";
+
     public bool CanInteract() => isActiveAndEnabled && _leaf != null;
 
     public void Interact(PlayerInventory inventory)

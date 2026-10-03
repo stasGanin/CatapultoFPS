@@ -45,7 +45,7 @@ public sealed class InteractPromptUI : MonoBehaviour
 
         string text = null;
         if (_interactor != null && _interactor.LookTarget != null && _interactor.LookTarget.CanInteract())
-            text = "Press E to interact";
+            text = $"[E]  {_interactor.LookTarget.InteractLabel}";
         if (!string.IsNullOrEmpty(RepairKitTool.AimPrompt))
             text = RepairKitTool.AimPrompt;
 
@@ -71,9 +71,7 @@ public sealed class InteractPromptUI : MonoBehaviour
         var canvas = canvasGo.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 55;
-        var scaler = canvasGo.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        UiScale.Configure(canvasGo.AddComponent<CanvasScaler>());
 
         _root = new GameObject("Prompt", typeof(RectTransform));
         _root.transform.SetParent(canvasGo.transform, false);

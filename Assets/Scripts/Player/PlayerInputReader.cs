@@ -21,6 +21,7 @@ public class PlayerInputReader : MonoBehaviour
     public bool RotateBuildingPressed { get; private set; }
     public float RotateBuildingScroll { get; private set; }
     public bool MapPressed { get; private set; }
+    public bool HelpTogglePressed { get; private set; }
     /// <summary>Mouse wheel: +1 next / -1 prev for hotbar when not in menu.</summary>
     public int HotbarScrollDelta { get; private set; }
     /// <summary>0–8 при нажатии 1–9, иначе -1.</summary>
@@ -41,6 +42,7 @@ public class PlayerInputReader : MonoBehaviour
         RotateBuildingPressed = false;
         RotateBuildingScroll = 0f;
         MapPressed = false;
+        HelpTogglePressed = false;
         HotbarScrollDelta = 0;
         HotbarSlotPressed = -1;
 
@@ -59,6 +61,7 @@ public class PlayerInputReader : MonoBehaviour
             InteractPressed = kb.eKey.wasPressedThisFrame;
             RotateBuildingPressed = kb.rKey.wasPressedThisFrame;
             MapPressed = kb.mKey.wasPressedThisFrame;
+            HelpTogglePressed = kb.f1Key.wasPressedThisFrame;
 
             if (kb.digit1Key.wasPressedThisFrame) HotbarSlotPressed = 0;
             else if (kb.digit2Key.wasPressedThisFrame) HotbarSlotPressed = 1;

@@ -12,6 +12,11 @@ public class CrosshairUI : MonoBehaviour
     Image[] _arms;
     Color _idle = new Color(1f, 1f, 1f, 0.85f);
     Color _use = new Color(0.98f, 0.86f, 0.38f, 0.95f);
+    // Хитмаркер: короткая красная вспышка и «раскрытие» прицела — игрок понимает, что попал.
+    const float HitMarkerTime = 0.14f;
+    const float HitMarkerScale = 1.35f;
+    static readonly Color HitColor = new Color(1f, 0.25f, 0.2f, 1f);
+    float _hitUntil;
 
     public void Bind(PlayerInventory inventory, BuildingController building)
     {
@@ -47,8 +52,19 @@ public class CrosshairUI : MonoBehaviour
             _arms = _root.GetComponentsInChildren<Image>(true);
     }
 
-    void OnEnable() => Hook();
-    void OnDisable() => Unhook();
+    void OnEnable()
+    {
+        Hook();
+        CombatFeedback.HitConfirmed += OnHitConfirmed;
+    }
+
+    void OnDisable()
+    {
+        Unhook();
+        CombatFeedback.HitConfirmed -= OnHitConfirmed;
+    }
+
+    void OnHitConfirmed(Vector3 _) => _hitUntil = Time.time + HitMarkerTime;
     void Start()
     {
         if (_mage == null)
@@ -125,7 +141,9 @@ public class CrosshairUI : MonoBehaviour
             hot = look != null && look.LookTarget != null && look.LookTarget.CanInteract();
         }
 
-        Color c = hot ? _use : _idle;
+        float hit = Mathf.Clamp01((_hitUntil - Time.time) / HitMarkerTime);
+        Color c = hit > 0f ? HitColor : hot ? _use : _idle;
+        _root.transform.localScale = Vector3.one * Mathf.Lerp(1f, HitMarkerScale, hit);
         for (int i = 0; i < _arms.Length; i++)
         {
             if (_arms[i] != null)
@@ -140,9 +158,7 @@ public class CrosshairUI : MonoBehaviour
         var canvas = canvasGo.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 50;
-        var scaler = canvasGo.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        UiScale.Configure(canvasGo.AddComponent<CanvasScaler>());
 
         _root = new GameObject("Crosshair", typeof(RectTransform));
         _root.transform.SetParent(canvasGo.transform, false);

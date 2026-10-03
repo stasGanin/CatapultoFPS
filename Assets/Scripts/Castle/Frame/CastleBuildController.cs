@@ -82,6 +82,10 @@ public sealed class CastleBuildController : MonoBehaviour
 
         if (_input.BuildMenuPressed)
         {
+            // На паузе стройка недоступна; открытая карта уступает место меню стройки.
+            if (SettingsMenuUI.IsOpen)
+                return;
+            WorldMapUI.CloseIfOpen();
             if (_mode == CastleBuildMode.Closed)
                 OpenMenu();
             else if (_mode == CastleBuildMode.Menu)

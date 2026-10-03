@@ -109,6 +109,10 @@ public sealed class BuildingController : MonoBehaviour
         // B toggles / opens building menu
         if (_input.BuildMenuPressed)
         {
+            // На паузе стройка недоступна; открытая карта уступает место меню стройки.
+            if (SettingsMenuUI.IsOpen)
+                return;
+            WorldMapUI.CloseIfOpen();
             if (_mode == BuildingMode.Closed)
                 OpenMenu();
             else if (_mode == BuildingMode.Menu)
