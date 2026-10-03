@@ -144,6 +144,40 @@ public sealed class StorageContainer : MonoBehaviour, IInventorySlots, ICastleMo
         return added;
     }
 
+    public int CountItem(ItemDefinition item)
+    {
+        EnsureSlots();
+        int total = 0;
+        for (int i = 0; i < _slots.Length; i++)
+        {
+            if (!_slots[i].IsEmpty && _slots[i].Item == item)
+                total += _slots[i].Count;
+        }
+
+        return total;
+    }
+
+    public bool TryConsumeItem(ItemDefinition item, int count)
+    {
+        if (item == null || count <= 0 || CountItem(item) < count)
+            return false;
+
+        int remaining = count;
+        for (int i = 0; i < _slots.Length && remaining > 0; i++)
+        {
+            if (_slots[i].IsEmpty || _slots[i].Item != item)
+                continue;
+            int take = Mathf.Min(_slots[i].Count, remaining);
+            _slots[i].Count -= take;
+            remaining -= take;
+            if (_slots[i].Count <= 0)
+                _slots[i] = default;
+        }
+
+        Changed?.Invoke();
+        return true;
+    }
+
 #if UNITY_EDITOR
     void OnDrawGizmosSelected()
     {

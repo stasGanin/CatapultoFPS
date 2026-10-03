@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TowerRecipe
   m_EditorClassIdentifier: 
   _id: tower
-  _displayName: Tower
+  _displayName: Cannon Tower
   _kind: 4
   _socketKind: 1
   _prefabResource: Castle/Modules/TowerModule

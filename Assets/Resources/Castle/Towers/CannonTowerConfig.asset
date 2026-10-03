@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b29a9b503d38496984bae54355e148fd, type: 3}
+  m_Name: CannonTowerConfig
+  m_EditorClassIdentifier: 
+  _shotsPerSecond: 0.7
+  _automatic: 1
+  _projectileRadius: 0.3
+  _projectileMass: 12
+  _muzzleSpeed: 60
+  _blastRadius: 1.4
+  _explosionForce: 900
+  _projectileLifetime: 8
+  _aimRange: 120
+  _projectileVisual: {fileID: 0}
+  _impactVisual: {fileID: 0}
+  _muzzleFlash: {fileID: 0}

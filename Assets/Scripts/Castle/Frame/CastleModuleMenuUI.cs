@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-/// <summary>B-menu: section, solid wall, window, door.</summary>
+/// <summary>B-menu: section, solid wall, window, door, tower, stations.</summary>
 public sealed class CastleModuleMenuUI : MonoBehaviour
 {
     [SerializeField] CastleBuildController _controller;
@@ -283,7 +283,8 @@ public sealed class CastleModuleMenuUI : MonoBehaviour
         return kind == CastleModuleKind.Section
                || kind == CastleModuleKind.Wall
                || kind == CastleModuleKind.Window
-               || kind == CastleModuleKind.Door;
+               || kind == CastleModuleKind.Door
+               || kind == CastleModuleKind.Tower;
     }
 
     static int SortKey(CastleModuleKind kind)
@@ -294,6 +295,7 @@ public sealed class CastleModuleMenuUI : MonoBehaviour
             case CastleModuleKind.Wall: return 1;
             case CastleModuleKind.Window: return 2;
             case CastleModuleKind.Door: return 3;
+            case CastleModuleKind.Tower: return 4;
             default: return 9;
         }
     }

@@ -13,6 +13,7 @@ public sealed class CarcassCastle : MonoBehaviour
     readonly Dictionary<Vector3Int, GameObject> _floors = new Dictionary<Vector3Int, GameObject>();
     readonly Dictionary<Vector3Int, GameObject> _roofs = new Dictionary<Vector3Int, GameObject>();
     readonly Dictionary<string, CarcassBay> _bays = new Dictionary<string, CarcassBay>();
+    readonly Dictionary<Vector2Int, CastleTower> _towers = new Dictionary<Vector2Int, CastleTower>();
 
     static CarcassCastle _player;
 
@@ -23,6 +24,7 @@ public sealed class CarcassCastle : MonoBehaviour
     Transform _merlonsRoot;
     Transform _laddersRoot;
     Transform _stationsRoot;
+    Transform _towersRoot;
 
     public bool IsPlayerOwned => _playerOwned;
     public IReadOnlyCollection<Vector3Int> Cells => _cells;
@@ -114,6 +116,7 @@ public sealed class CarcassCastle : MonoBehaviour
             FillNewWalls(x, y, z, doorDir, doorSlot);
 
         RefreshMerlons();
+        RefreshTowers();
         if (!fillOuterWalls)
             HitSparkVfx.PlayDust(transform.TransformPoint(CarcassMetrics.CellCenterLocal(x, y, z)), Vector3.up, 14);
         return true;
@@ -201,6 +204,130 @@ public sealed class CarcassCastle : MonoBehaviour
     public Vector3 CellWorldCenter(int x, int y, int z)
     {
         return transform.TransformPoint(CarcassMetrics.CellCenterLocal(x, y, z));
+    }
+
+    /// <summary>Верхний этаж колонки (x, z) или -1, если там нет секций.</summary>
+    public int TopFloorAt(int x, int z)
+    {
+        for (int y = CarcassMetrics.MaxFloors - 1; y >= 0; y--)
+        {
+            if (HasCell(x, y, z))
+                return y;
+        }
+
+        return -1;
+    }
+
+    public bool CanPlaceTower(TowerCorner corner)
+    {
+        return TopFloorAt(corner.CellX, corner.CellZ) >= 0
+               && !_towers.ContainsKey(corner.Vertex)
+               && IsOuterCorner(corner);
+    }
+
+    /// <summary>
+    /// Угол внешний, пока вокруг его вершины стоит только своя клетка. Соседи проверяются на нулевом этаже:
+    /// верхние секции опираются на нижние, так что угол не «зарастёт» позже на одном лишь верхнем этаже.
+    /// </summary>
+    bool IsOuterCorner(TowerCorner corner)
+    {
+        Vector2Int v = corner.Vertex;
+        for (int cx = v.x - 1; cx <= v.x; cx++)
+        {
+            for (int cz = v.y - 1; cz <= v.y; cz++)
+            {
+                if ((cx != corner.CellX || cz != corner.CellZ) && HasCell(cx, 0, cz))
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
+    public bool TryAddTower(TowerCorner corner)
+    {
+        if (!CanPlaceTower(corner))
+            return false;
+
+        if (_towersRoot == null)
+            _towersRoot = EnsureChild("Towers");
+        int floorY = TopFloorAt(corner.CellX, corner.CellZ);
+        _towers[corner.Vertex] = CastleTower.Create(this, _towersRoot, corner, floorY);
+        return true;
+    }
+
+    public void RemoveTower(CastleTower tower, bool destroyedByDamage = false)
+    {
+        if (tower == null)
+            return;
+        _towers.Remove(tower.Corner.Vertex);
+        tower.Dismantle(destroyedByDamage);
+    }
+
+    /// <summary>
+    /// Снимает башни, чей угол после пристройки секции оказался внутри замка. Возвращает их число,
+    /// чтобы вызывающий вернул ресурсы (как и со стенами в <see cref="ClearSharedWalls"/>).
+    /// </summary>
+    public int RemoveSwallowedTowers()
+    {
+        var swallowed = new List<CastleTower>();
+        foreach (var tower in _towers.Values)
+        {
+            if (!IsOuterCorner(tower.Corner))
+                swallowed.Add(tower);
+        }
+
+        for (int i = 0; i < swallowed.Count; i++)
+            RemoveTower(swallowed[i]);
+        return swallowed.Count;
+    }
+
+    /// <summary>Башни переезжают на крышу нового верхнего этажа своей колонки.</summary>
+    void RefreshTowers()
+    {
+        foreach (var tower in _towers.Values)
+            tower.MoveToFloor(TopFloorAt(tower.Corner.CellX, tower.Corner.CellZ));
+    }
+
+    public bool FindBestTowerCorner(Ray ray, float maxRange, out TowerCorner best)
+    {
+        best = default;
+        float bestScore = float.MaxValue;
+        bool found = false;
+        foreach (var cell in _cells)
+        {
+            // Угол принадлежит колонке целиком: перебираем каждую один раз, по верхнему этажу.
+            if (TopFloorAt(cell.x, cell.z) != cell.y)
+                continue;
+            for (int dx = 0; dx <= 1; dx++)
+            {
+                for (int dz = 0; dz <= 1; dz++)
+                {
+                    var corner = new TowerCorner(cell.x, cell.z, dx, dz);
+                    if (!CanPlaceTower(corner))
+                        continue;
+                    Vector3 p = TowerWorldBase(corner);
+                    Vector3 to = p - ray.origin;
+                    if (to.sqrMagnitude > maxRange * maxRange)
+                        continue;
+                    float score = to.magnitude + Vector3.Cross(ray.direction, to).magnitude * 1.4f;
+                    if (score < bestScore)
+                    {
+                        bestScore = score;
+                        best = corner;
+                        found = true;
+                    }
+                }
+            }
+        }
+
+        return found;
+    }
+
+    public Vector3 TowerWorldBase(TowerCorner corner)
+    {
+        int floorY = TopFloorAt(corner.CellX, corner.CellZ);
+        return transform.TransformPoint(CarcassMetrics.TowerBaseLocal(corner.CellX, corner.CellZ, corner.DX, corner.DZ, floorY));
     }
 
     bool HasOrthoNeighbor(int x, int y, int z)

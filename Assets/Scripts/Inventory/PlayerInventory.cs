@@ -41,6 +41,7 @@ public class PlayerInventory : MonoBehaviour, IInventorySlots
 
     public bool BlocksGameplayInput =>
         IsDead
+        || TowerOperator.IsOperating
         || ResearchUI.IsOpen
         || _menuOpen
         || IsCraftOpen

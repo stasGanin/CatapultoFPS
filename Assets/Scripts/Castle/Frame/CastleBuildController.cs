@@ -32,6 +32,8 @@ public sealed class CastleBuildController : MonoBehaviour
     int _snapY;
     int _snapZ;
     bool _hasSectionSnap;
+    TowerCorner _towerSnap;
+    bool _hasTowerSnap;
     CarcassBay _demolishTarget;
     StationBuildTool _stations;
     static readonly Color DemolishTint = new Color(1f, 0.3f, 0.25f, 1f);
@@ -187,6 +189,16 @@ public sealed class CastleBuildController : MonoBehaviour
             return;
         }
 
+        CastleTower tower = FindDemolishTower();
+        if (tower != null)
+        {
+            SetDemolishTarget(null);
+            DemolishPrompt = $"[LMB] Demolish Cannon Tower (+{RefundFor(CastleModuleKind.Tower)} stone)";
+            if (_input.AttackPressed)
+                DemolishTower(tower);
+            return;
+        }
+
         SetDemolishTarget(FindDemolishTarget());
         DemolishPrompt = _demolishTarget != null
             ? $"[LMB] Demolish {_demolishTarget.Occupant} (+{RefundFor(_demolishTarget.Occupant)} stone)"
@@ -206,6 +218,25 @@ public sealed class CastleBuildController : MonoBehaviour
             return null;
         var castle = bay.GetComponentInParent<CarcassCastle>();
         return castle != null && castle.IsPlayerOwned ? bay : null;
+    }
+
+    /// <summary>Башня своего замка точно под прицелом — для режима сноса.</summary>
+    CastleTower FindDemolishTower()
+    {
+        Ray ray = _camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        if (!Physics.Raycast(ray, out RaycastHit hit, _demolishRange, ~0, QueryTriggerInteraction.Ignore))
+            return null;
+        var tower = hit.collider.GetComponentInParent<CastleTower>();
+        return tower != null && tower.Castle.IsPlayerOwned ? tower : null;
+    }
+
+    void DemolishTower(CastleTower tower)
+    {
+        int refund = RefundFor(CastleModuleKind.Tower);
+        tower.Castle.RemoveTower(tower);
+        if (refund > 0)
+            _inventory.TryAddItem(_stoneItem, refund);
+        DemolishPrompt = null;
     }
 
     void SetDemolishTarget(CarcassBay bay)
@@ -237,6 +268,7 @@ public sealed class CastleBuildController : MonoBehaviour
         int refund = 0;
         for (int i = 0; i < removed.Count; i++)
             refund += RefundFor(removed[i]);
+        refund += castle.RemoveSwallowedTowers() * RefundFor(CastleModuleKind.Tower);
         if (refund > 0)
             _inventory.TryAddItem(_stoneItem, refund);
     }
@@ -321,7 +353,22 @@ public sealed class CastleBuildController : MonoBehaviour
         Ray ray = _camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         bool valid = false;
 
-        if (_selected.Kind == CastleModuleKind.Section)
+        if (_selected.Kind == CastleModuleKind.Tower)
+        {
+            ClearHighlight();
+            _hasTowerSnap = castle.FindBestTowerCorner(ray, _snapRange, out _towerSnap);
+            valid = _hasTowerSnap && CanAfford();
+            if (_hasTowerSnap)
+            {
+                _ghost.SetActive(true);
+                _ghost.transform.SetPositionAndRotation(castle.TowerWorldBase(_towerSnap), castle.transform.rotation);
+            }
+            else
+            {
+                PlaceGhostAlongRay(ray, false);
+            }
+        }
+        else if (_selected.Kind == CastleModuleKind.Section)
         {
             ClearHighlight();
             _hasSectionSnap = castle.FindBestSectionCell(ray, _snapRange, out _snapX, out _snapY, out _snapZ);
@@ -383,7 +430,11 @@ public sealed class CastleBuildController : MonoBehaviour
             return;
 
         bool placed = false;
-        if (_selected.Kind == CastleModuleKind.Section)
+        if (_selected.Kind == CastleModuleKind.Tower)
+        {
+            placed = _hasTowerSnap && castle.TryAddTower(_towerSnap);
+        }
+        else if (_selected.Kind == CastleModuleKind.Section)
         {
             if (_hasSectionSnap)
             {
@@ -424,7 +475,7 @@ public sealed class CastleBuildController : MonoBehaviour
 
         _ghost = _selected.Kind == CastleModuleKind.Section
             ? CarcassKit.CreateSectionGhost()
-            : CarcassKit.CreateWallGhost(_selected.Kind);
+            : _selected.Kind == CastleModuleKind.Tower ? CastleTower.CreateGhost() : CarcassKit.CreateWallGhost(_selected.Kind);
         ApplyGhostMaterials(_ghost);
         SetGhostValid(false);
     }
@@ -502,6 +553,7 @@ public sealed class CastleBuildController : MonoBehaviour
             _highlightedBay.SetPreviewHidden(false);
         _highlightedBay = null;
         _hasSectionSnap = false;
+        _hasTowerSnap = false;
     }
 
     void ApplyCursor()

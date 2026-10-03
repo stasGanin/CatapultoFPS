@@ -91,6 +91,18 @@ public static class CarcassMetrics
         return p;
     }
 
+    /// <summary>Отступ центра башни от внешних краёв угловой клетки: башня стоит на крыше, а не свисает с неё.</summary>
+    public const float TowerCornerInset = 2.4f;
+
+    /// <summary>Основание башни на крыше угловой клетки (cx, floorY, cz); dx/dz — сторона угла (0 = западная/южная).</summary>
+    public static Vector3 TowerBaseLocal(int cx, int cz, int dx, int dz, int floorY)
+    {
+        return new Vector3(
+            cx * GridPitch + (dx == 0 ? TowerCornerInset : FloorSize - TowerCornerInset),
+            floorY * ColumnHeight + ColumnHeight + RoofThickness,
+            cz * GridPitch + (dz == 0 ? TowerCornerInset : FloorSize - TowerCornerInset));
+    }
+
     public static Vector3 BayLocal(int cx, int floorY, int cz, WallDir dir, int slot)
     {
         int s = slot == 0 ? 0 : 1;

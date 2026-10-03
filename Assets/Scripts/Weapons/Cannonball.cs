@@ -23,6 +23,71 @@ public class Cannonball : MonoBehaviour
         Destroy(gameObject, _lifetime);
     }
 
+    /// <summary>
+    /// Спавнит физическое ядро. Общий для ручной пушки и башни; <paramref name="ignored"/> — коллайдеры стрелка,
+    /// о которые ядро не должно взрываться на старте.
+    /// </summary>
+    public static void Launch(WeaponConfig config, Vector3 origin, Vector3 direction, params Collider[] ignored)
+    {
+        float diameter = config.ProjectileRadius * 2f;
+
+        GameObject ball = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        ball.name = "Cannonball";
+        ball.transform.position = origin + direction * (config.ProjectileRadius + 0.05f);
+        ball.transform.rotation = Quaternion.LookRotation(direction);
+        ball.transform.localScale = Vector3.one * diameter;
+
+        var meshRenderer = ball.GetComponent<MeshRenderer>();
+        if (meshRenderer != null)
+            meshRenderer.enabled = config.ProjectileVisual == null;
+
+        SphereCollider ballCollider = ball.GetComponent<SphereCollider>();
+        if (ballCollider != null)
+        {
+            ballCollider.isTrigger = true;
+            for (int i = 0; i < ignored.Length; i++)
+            {
+                if (ignored[i] != null)
+                    Physics.IgnoreCollision(ballCollider, ignored[i], true);
+            }
+        }
+
+        Rigidbody body = ball.AddComponent<Rigidbody>();
+        body.mass = config.ProjectileMass;
+        body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        body.interpolation = RigidbodyInterpolation.Interpolate;
+        body.linearVelocity = direction * config.MuzzleSpeed;
+
+        var projectile = ball.AddComponent<Cannonball>();
+        projectile.Init(config.BlastRadius, config.ExplosionForce, config.ProjectileLifetime, config.ImpactVisual);
+
+        var vfxAnchor = new GameObject("Vfx");
+        vfxAnchor.transform.SetParent(ball.transform, false);
+        float ballScale = ball.transform.localScale.x;
+        if (ballScale > 1e-4f)
+            vfxAnchor.transform.localScale = Vector3.one / ballScale;
+        ProjectileVfx.AttachFlight(vfxAnchor.transform, config.ProjectileVisual, direction);
+
+        if (config.ProjectileVisual == null)
+            ApplyColor(ball, new Color(0.12f, 0.12f, 0.14f));
+    }
+
+    static void ApplyColor(GameObject target, Color color)
+    {
+        var renderer = target.GetComponent<MeshRenderer>();
+        if (renderer == null)
+            return;
+
+        Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+        if (shader != null)
+            renderer.sharedMaterial = new Material(shader);
+
+        var block = new MaterialPropertyBlock();
+        block.SetColor("_BaseColor", color);
+        block.SetColor("_Color", color);
+        renderer.SetPropertyBlock(block);
+    }
+
     void OnTriggerEnter(Collider other)
     {
         if (_detonated || other == null)

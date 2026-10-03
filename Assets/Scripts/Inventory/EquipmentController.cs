@@ -99,7 +99,7 @@ public class EquipmentController : MonoBehaviour
 
     void Refresh()
     {
-        ItemKind kind = _inventory != null ? _inventory.SelectedKind : ItemKind.None;
+        ItemKind kind = _inventory != null && !TowerOperator.IsOperating ? _inventory.SelectedKind : ItemKind.None;
         bool canUse = _inventory == null || !_inventory.BlocksGameplayInput;
 
         bool showCannon = kind == ItemKind.HandCannon;
