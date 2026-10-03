@@ -9,7 +9,15 @@ public static class UiScale
     // а на 4:3 не сжимаются до нечитаемости.
     public const float MatchWidthOrHeight = 0.5f;
 
+    /// <summary>Канвас игрового интерфейса: размер зависит от пользовательской настройки масштаба.</summary>
     public static void Configure(CanvasScaler scaler)
+    {
+        ConfigureFixed(scaler);
+        scaler.gameObject.AddComponent<UiScaleFollower>();
+    }
+
+    /// <summary>Канвас без пользовательского масштаба (меню настроек: иначе слайдер «уезжает» из-под курсора).</summary>
+    public static void ConfigureFixed(CanvasScaler scaler)
     {
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = ReferenceResolution;

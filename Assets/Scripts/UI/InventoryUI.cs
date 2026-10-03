@@ -419,8 +419,8 @@ public class InventoryUI : MonoBehaviour
         var iconGo = new GameObject("Icon", typeof(RectTransform));
         iconGo.transform.SetParent(go.transform, false);
         var iconRt = (RectTransform)iconGo.transform;
-        iconRt.anchorMin = new Vector2(0.12f, 0.22f);
-        iconRt.anchorMax = new Vector2(0.88f, 0.88f);
+        iconRt.anchorMin = new Vector2(0.06f, 0.06f);
+        iconRt.anchorMax = new Vector2(0.94f, 0.94f);
         iconRt.offsetMin = Vector2.zero;
         iconRt.offsetMax = Vector2.zero;
         var icon = iconGo.AddComponent<Image>();

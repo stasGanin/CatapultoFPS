@@ -13,8 +13,13 @@ public static class GameSettings
     const float DefaultSensitivity = 0.15f;
     const float DefaultFov = 75f;
     const float DefaultVolume = 1f;
+    const float MinUiScale = 0.75f;
+    const float MaxUiScale = 1.25f;
 
     static bool _loaded;
+
+    /// <summary>Масштаб игрового интерфейса (HUD, инвентарь, крафт); меню настроек не затрагивает.</summary>
+    public static event System.Action UiScaleChanged;
 
     public static float LookSensitivity { get; private set; } = DefaultSensitivity;
     public static bool InvertY { get; private set; }
@@ -22,6 +27,7 @@ public static class GameSettings
     public static float MasterVolume { get; private set; } = DefaultVolume;
     public static bool Fullscreen { get; private set; } = true;
     public static int QualityLevel { get; private set; }
+    public static float UiScale { get; private set; } = MaxUiScale;
 
     public static void EnsureLoaded()
     {
@@ -34,6 +40,8 @@ public static class GameSettings
         MasterVolume = PlayerPrefs.GetFloat(VolumeKey, DefaultVolume);
         Fullscreen = PlayerPrefs.GetInt(FullscreenKey, Screen.fullScreen ? 1 : 0) != 0;
         QualityLevel = PlayerPrefs.GetInt(QualityKey, QualitySettings.GetQualityLevel());
+        // Каждый запуск начинаем с максимального масштаба; слайдер меняет его до перезапуска.
+        UiScale = MaxUiScale;
         Apply();
     }
 
@@ -42,6 +50,12 @@ public static class GameSettings
         LookSensitivity = Mathf.Clamp(value, 0.04f, 0.45f);
         PlayerPrefs.SetFloat(SensKey, LookSensitivity);
         Save();
+    }
+
+    public static void SetUiScale(float value)
+    {
+        UiScale = Mathf.Clamp(Mathf.Round(value * 20f) / 20f, MinUiScale, MaxUiScale);
+        UiScaleChanged?.Invoke();
     }
 
     public static void SetInvertY(bool value)
