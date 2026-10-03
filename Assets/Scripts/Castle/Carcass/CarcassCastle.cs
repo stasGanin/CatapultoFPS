@@ -21,6 +21,7 @@ public sealed class CarcassCastle : MonoBehaviour
     Transform _roofsRoot;
     Transform _baysRoot;
     Transform _merlonsRoot;
+    Transform _laddersRoot;
 
     public bool IsPlayerOwned => _playerOwned;
     public IReadOnlyCollection<Vector3Int> Cells => _cells;
@@ -51,6 +52,7 @@ public sealed class CarcassCastle : MonoBehaviour
         _roofsRoot = EnsureChild("Roofs");
         _baysRoot = EnsureChild("Bays");
         _merlonsRoot = EnsureChild("Merlons");
+        _laddersRoot = EnsureChild("Ladders");
         if (playerOwned)
             _player = this;
     }
@@ -89,7 +91,10 @@ public sealed class CarcassCastle : MonoBehaviour
         EnsureFloor(x, y, z);
         RefreshRoof(x, y, z);
         if (y > 0)
+        {
             RefreshRoof(x, y - 1, z);
+            CarcassLadder.CreatePair(transform, _laddersRoot, x, y - 1, z);
+        }
 
         EnsureBay(x, y, z, CarcassMetrics.WallDir.N, 0);
         EnsureBay(x, y, z, CarcassMetrics.WallDir.N, 1);
