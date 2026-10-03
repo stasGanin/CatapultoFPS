@@ -26,6 +26,8 @@ public sealed class EnemyCombatBootstrap : MonoBehaviour
     {
         if (GetComponent<PlayerHealth>() == null)
             gameObject.AddComponent<PlayerHealth>();
+        if (GetComponent<PlayerRespawn>() == null)
+            gameObject.AddComponent<PlayerRespawn>();
         if (GetComponent<PlayerMana>() == null)
             gameObject.AddComponent<PlayerMana>();
         // HP label lives on scene GameUI (Catapulto/UI/Generate…). Fallback only if none exists.

@@ -31,7 +31,7 @@ public static class DamageUtility
     }
 
     public static void ApplyToCollider(
-        Collider col, float amount, Vector3 point, Vector3 normal, Vector3 direction)
+        Collider col, float amount, Vector3 point, Vector3 normal, Vector3 direction, bool fromPlayer = true)
     {
         if (col == null || amount <= 0f)
             return;
@@ -39,12 +39,24 @@ public static class DamageUtility
         var chunk = col.GetComponentInParent<CastleWallChunk>();
         if (chunk != null && !chunk.IsDetached)
         {
-            chunk.ApplyHit(Mathf.CeilToInt(amount), point, normal);
+            chunk.ApplyHit(Mathf.CeilToInt(amount), point, normal, fromPlayer);
             return;
         }
 
         var damageable = col.GetComponentInParent<IDamageable>();
-        damageable?.ApplyDamage(amount, new DamageInfo(point, normal, direction));
+        if (damageable == null)
+            return;
+        damageable.ApplyDamage(amount, new DamageInfo(point, normal, direction, fromPlayer));
+
+        // Хитмаркер только по живым целям: попадание в стену не должно ощущаться как «попал».
+        if (fromPlayer && !(damageable is CarcassWallBreakable) && !(damageable is CastleModuleBreakable))
+            CombatFeedback.RaiseHitConfirmed(point);
+    }
+
+    /// <summary>Enemy-side hit: damages the player and player castle walls, never enemy castles.</summary>
+    public static void ApplyEnemyHit(Collider col, float amount, Vector3 point, Vector3 normal, Vector3 direction)
+    {
+        ApplyToCollider(col, amount, point, normal, direction, fromPlayer: false);
     }
 
     /// <summary>
@@ -62,7 +74,8 @@ public static class DamageUtility
     }
 
     public static void ApplyInRadius(
-        Vector3 point, float radius, float amount, Vector3 outwardHint, GameObject ignoreRoot = null)
+        Vector3 point, float radius, float amount, Vector3 outwardHint, GameObject ignoreRoot = null,
+        bool fromPlayer = true)
     {
         if (radius <= 0f || amount <= 0f)
             return;
@@ -76,6 +89,9 @@ public static class DamageUtility
                 continue;
             if (ignoreRoot != null &&
                 (col.transform == ignoreRoot.transform || col.transform.IsChildOf(ignoreRoot.transform)))
+                continue;
+            // Вражеские взрывы не задевают других врагов.
+            if (!fromPlayer && EnemySenses.IsEnemy(col))
                 continue;
 
             var chunk = col.GetComponentInParent<CastleWallChunk>();
@@ -91,7 +107,7 @@ public static class DamageUtility
 
             Vector3 to = col.bounds.center - point;
             Vector3 dir = to.sqrMagnitude > 0.0001f ? to.normalized : outwardHint;
-            ApplyToCollider(col, amount, point, -dir, dir);
+            ApplyToCollider(col, amount, point, -dir, dir, fromPlayer);
         }
     }
 }

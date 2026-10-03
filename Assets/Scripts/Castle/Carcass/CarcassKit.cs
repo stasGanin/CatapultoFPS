@@ -11,6 +11,9 @@ public static class CarcassKit
     const string DoorPath = "Castle/Carcass/Source/WallDoor";
     const string WindowPath = "Castle/Carcass/Source/WallWindows";
     const string MerlonPath = "Castle/Carcass/Source/Merlon";
+    const string WallBrokenPath = "Castle/Carcass/Source/WallDestroyed";
+    const string DoorBrokenPath = "Castle/Carcass/Source/WallDoorDestroyed";
+    const string WindowBrokenPath = "Castle/Carcass/Source/WallWindowsDestroyed";
 
     static bool _ready;
     static GameObject _corner;
@@ -20,6 +23,9 @@ public static class CarcassKit
     static GameObject _window;
     static GameObject _door;
     static GameObject _merlon;
+    static GameObject _wallBroken;
+    static GameObject _windowBroken;
+    static GameObject _doorBroken;
     static Transform _hidden;
 
     public static GameObject CreateCorner(Transform parent, Vector3 localPos)
@@ -67,6 +73,33 @@ public static class CarcassKit
         root.SetFootprint(CarcassMetrics.WallAlong, CarcassMetrics.WallThickness, CarcassMetrics.WallHeight);
         if (kind == CastleModuleKind.Door)
             WireDoor(go);
+        go.AddComponent<CarcassWallBreakable>();
+        return go;
+    }
+
+    /// <summary>
+    /// Pre-fractured version of a wall module, aligned to the intact one (same bottom-center pivot).
+    /// Null when the art is missing — the caller then breaks the intact mesh as a single piece.
+    /// </summary>
+    public static GameObject CreateBrokenArt(CastleModuleKind kind, Transform parent)
+    {
+        EnsureLoaded();
+        GameObject template = kind == CastleModuleKind.Door
+            ? _doorBroken
+            : kind == CastleModuleKind.Window
+                ? _windowBroken
+                : _wallBroken;
+        if (template == null)
+            return null;
+
+        // Без EnsureCollider: коллайдеры кускам выдаёт CastleWallChunk.
+        GameObject go = UnityEngine.Object.Instantiate(template);
+        go.name = "BrokenArt";
+        go.SetActive(true);
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = Vector3.zero;
+        go.transform.localRotation = Quaternion.identity;
+        go.transform.localScale = Vector3.one;
         return go;
     }
 
@@ -190,6 +223,9 @@ public static class CarcassKit
         _door = CaptureRoot(DoorPath, "WallDoor") ?? FallbackDoor();
         _merlon = CaptureNamed(MerlonPath, "Merlon", "T2", "T1", "CornerT")
                   ?? FallbackBox("Merlon", new Vector3(1f, 0.64f, 1.5f));
+        _wallBroken = PrepareBroken(WallBrokenPath, "WallSolidBroken");
+        _windowBroken = PrepareBroken(WindowBrokenPath, "WallWindowBroken");
+        _doorBroken = PrepareBroken(DoorBrokenPath, "WallDoorBroken");
 
         _corner = RecenterBottom(_corner);
         _floor = RecenterBottom(_floor);
@@ -210,6 +246,17 @@ public static class CarcassKit
         ParentHidden(_window);
         ParentHidden(_door);
         ParentHidden(_merlon);
+    }
+
+    /// <summary>Тот же пайплайн, что и у целых стен, чтобы куски совпали с целой моделью.</summary>
+    static GameObject PrepareBroken(string resourcePath, string cloneName)
+    {
+        GameObject go = CaptureRoot(resourcePath, cloneName);
+        if (go == null)
+            return null;
+        go = OrientAlongZ(RecenterBottom(go));
+        ParentHidden(go);
+        return go;
     }
 
     static GameObject CaptureNamed(string resourcePath, string cloneName, params string[] needles)

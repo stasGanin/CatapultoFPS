@@ -67,6 +67,9 @@ public sealed class CastleModuleRoot : MonoBehaviour
         IgnoreAttachedPairs(true);
         EnsureKeyChunk();
         HighlightKeyChunk();
+        var breakable = GetComponent<CarcassWallBreakable>();
+        if (breakable != null)
+            breakable.OnRepaired();
         return true;
     }
 
@@ -222,6 +225,10 @@ public sealed class CastleModuleRoot : MonoBehaviour
 
         if (detached == _keyChunk)
             NotifyModuleDestroyed();
+
+        var breakable = GetComponent<CarcassWallBreakable>();
+        if (breakable != null)
+            breakable.OnChunkDetached(detached);
     }
 
     public void IgnoreAttachedPairs(bool ignore)

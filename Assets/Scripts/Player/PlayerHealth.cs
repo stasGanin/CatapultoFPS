@@ -1,22 +1,25 @@
 using System;
 using UnityEngine;
 
-/// <summary>Player hit points. Enemy projectiles deal tiny chip damage.</summary>
+/// <summary>Player hit points, damage and death events. Respawn lives in PlayerRespawn.</summary>
 public sealed class PlayerHealth : MonoBehaviour, IDamageable
 {
-    [SerializeField] float _maxHealth = 10000f;
-
+    PlayerCombatConfig _config;
     float _health;
 
-    public float MaxHealth => _maxHealth;
+    public float MaxHealth => _config.MaxHealth;
     public float Health => _health;
     public bool IsDead => _health <= 0f;
 
     public event Action<float, float> HealthChanged;
+    /// <summary>Amount and hit info — HUD uses it for the damage direction indicator.</summary>
+    public event Action<float, DamageInfo> Damaged;
+    public event Action Died;
 
     void Awake()
     {
-        _health = _maxHealth;
+        _config = PlayerCombatConfig.Load();
+        _health = _config.MaxHealth;
     }
 
     public void ApplyDamage(float amount, in DamageInfo info)
@@ -25,12 +28,15 @@ public sealed class PlayerHealth : MonoBehaviour, IDamageable
             return;
 
         _health = Mathf.Max(0f, _health - amount);
-        HealthChanged?.Invoke(_health, _maxHealth);
+        Damaged?.Invoke(amount, info);
+        HealthChanged?.Invoke(_health, _config.MaxHealth);
+        if (IsDead)
+            Died?.Invoke();
     }
 
     public void ResetFull()
     {
-        _health = _maxHealth;
-        HealthChanged?.Invoke(_health, _maxHealth);
+        _health = _config.MaxHealth;
+        HealthChanged?.Invoke(_health, _config.MaxHealth);
     }
 }

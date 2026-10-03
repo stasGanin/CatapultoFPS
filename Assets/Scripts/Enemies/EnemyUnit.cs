@@ -1,57 +1,54 @@
 using UnityEngine;
 
 /// <summary>
-/// Flying sphere: grows in a socket, leaves via the door, then hunts and shoots only with LOS.
+/// Flying caster: grows in a socket, then fights the player, sieges player walls or guards home.
+/// Shots are telegraphed, fired in bursts and only along a verified clear path.
 /// </summary>
 public sealed class EnemyUnit : MonoBehaviour, IDamageable
 {
+    const string ConfigPath = "Enemies/FlyerConfig";
     const float FullScale = 0.85f;
     const float MinGrowScale = 0.08f;
-    const float HomeYardRadius = 16f;
-    const float ExitTimeout = 4f;
-    const float HoverMin = 1.15f;
-    const float HoverMax = 2.45f;
-    const float ExitHoverMax = 4.8f;
+    const float Acceleration = 16f;
+    const float SteerLookAhead = 1.8f;
+    const float AltitudeGain = 2.5f;
+    const float MaxClimbSpeed = 3f;
+    const float GuardRadius = 9f;
+    const float BoltRadius = 0.18f;
+    const float StrafeFlipMin = 2.5f;
+    const float StrafeFlipMax = 5f;
+    const float CancelledShotCooldown = 0.6f;
 
-    [SerializeField] float _maxHealth = 20f;
-    [SerializeField] float _fireInterval = 1.1f;
-    [SerializeField] float _projectileSpeed = 10f;
-    [SerializeField] float _projectileDamage = 1f;
-    [SerializeField] float _aimHeight = 1.1f;
-    [SerializeField] float _range = 28f;
-    [SerializeField] float _flySpeed = 6f;
-    [SerializeField] float _standoffDistance = 10f;
-    [SerializeField] float _hoverHeight = 1.5f;
     [SerializeField] Color _color = new Color(0.72f, 0.22f, 0.2f);
 
-    enum ExitPhase
-    {
-        Exit = 0,
-        Hunt = 1
-    }
+    enum AttackState { Idle, Charging, Bursting }
 
+    static readonly Collider[] Neighbours = new Collider[12];
+
+    EnemyConfig _config;
+    EnemyTargeting _targeting;
+    EnemyBodyView _view;
     float _health;
-    float _nextFire;
     float _growDuration;
     float _growElapsed;
-    float _orbitSign = 1f;
-    float _phaseElapsed;
-    Transform _player;
-    SquareCastle _playerCastle;
-    SquareCastle _homeCastle;
-    CastleWallChunk _siegeChunk;
-    SphereCollider _sphere;
-    Collider _selfCol;
-    Rigidbody _body;
-    bool _dead;
     bool _released;
-    ExitPhase _exitPhase;
+    bool _dead;
+    Transform _spawnCastle;
+    SphereCollider _sphere;
+    Rigidbody _body;
+
+    float _orbitSign = 1f;
+    float _nextStrafeFlip;
+    AttackState _attack;
+    float _attackTimer;
+    float _nextAttack;
+    int _shotsLeft;
+    bool _attackOnPlayer;
 
     public bool IsGrowing => !_released && !_dead;
 
     public static EnemyUnit SpawnInSocket(Transform socket, float growDuration)
     {
-        Vector3 pos = socket != null ? socket.position : Vector3.zero;
         var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         go.name = "Enemy";
         if (socket != null)
@@ -59,10 +56,6 @@ public sealed class EnemyUnit : MonoBehaviour, IDamageable
             go.transform.SetParent(socket, false);
             go.transform.localPosition = Vector3.zero;
             go.transform.localRotation = Quaternion.identity;
-        }
-        else
-        {
-            go.transform.position = pos;
         }
 
         go.transform.localScale = Vector3.one * MinGrowScale;
@@ -75,12 +68,7 @@ public sealed class EnemyUnit : MonoBehaviour, IDamageable
 
         var unit = go.AddComponent<EnemyUnit>();
         unit._growDuration = Mathf.Max(0.2f, growDuration);
-        unit._body = body;
-        unit._sphere = go.GetComponent<SphereCollider>();
-        unit._selfCol = unit._sphere;
-        unit._homeCastle = socket != null ? socket.GetComponentInParent<SquareCastle>() : null;
-        unit.ApplyColor();
-        unit.IgnoreHomeObstacles(true);
+        unit._spawnCastle = EnemyNav.HomeCastleOf(socket);
         return unit;
     }
 
@@ -95,496 +83,289 @@ public sealed class EnemyUnit : MonoBehaviour, IDamageable
 
     void Awake()
     {
-        _health = _maxHealth;
-        if (_body == null)
-            _body = GetComponent<Rigidbody>();
-        if (_sphere == null)
-            _sphere = GetComponent<SphereCollider>();
-        if (_selfCol == null)
-            _selfCol = GetComponent<Collider>();
+        _config = EnemyConfig.Load(ConfigPath);
+        _targeting = new EnemyTargeting(_config, transform);
+        _health = _config.MaxHealth;
+        _body = GetComponent<Rigidbody>();
+        _sphere = GetComponent<SphereCollider>();
         _orbitSign = (GetInstanceID() & 1) == 0 ? 1f : -1f;
-        CachePlayer();
-        CachePlayerCastle();
-        ApplyColor();
+    }
+
+    void OnDestroy()
+    {
+        EnemyAttackTokens.Release(this);
     }
 
     void Update()
     {
         if (_dead)
             return;
-
         if (!_released)
         {
             TickGrow();
             return;
         }
 
-        if (_player == null)
-        {
-            CachePlayer();
-            if (_player == null)
-                return;
-        }
-
-        FaceTarget();
-        TryShoot();
+        if (_targeting.Tick(_body.position))
+            EnemyNav.IgnoreCastle(_sphere, _targeting.HomeCastle, false);
+        TickAttack(Time.deltaTime);
+        _view.Tick(AttackCharge());
     }
 
     void FixedUpdate()
     {
-        if (_dead || !_released || _body == null)
+        if (_dead || !_released)
             return;
-        if (_player == null)
-            CachePlayer();
-        CachePlayerCastle();
 
-        if (_exitPhase != ExitPhase.Hunt)
+        Vector3 desired = _targeting.Current switch
         {
-            TickExit();
-            return;
-        }
+            EnemyTargeting.Goal.Exit => DirectionTo(EnemyNav.DoorExitPoint(_targeting.HomeCastle, _body.position)),
+            EnemyTargeting.Goal.Engage => EngageMove(),
+            EnemyTargeting.Goal.Siege => SiegeMove(),
+            _ => GuardMove()
+        };
 
-        bool fightPlayer = CanFightPlayer();
-        Vector3 target = fightPlayer ? AimPoint() : SiegePoint();
-        Vector3 toTarget = target - _body.position;
-        float dist = toTarget.magnitude;
-        Vector3 desired = toTarget / Mathf.Max(dist, 0.001f);
-        float hold = fightPlayer ? _standoffDistance : 3.2f;
+        // Во время замаха и очереди стрелок замирает — это и есть телеграф для игрока.
+        if (_attack != AttackState.Idle)
+            desired = Vector3.zero;
 
-        bool canSee = fightPlayer || HasLineOfSight(target, _siegeChunk);
-        if (!canSee)
-        {
-            Vector3 side = Vector3.Cross(Vector3.up, desired);
-            if (side.sqrMagnitude < 0.001f)
-                side = transform.right;
-            desired = (desired + side.normalized * (0.7f * _orbitSign)).normalized;
-        }
-        else if (dist < hold)
-        {
-            float holdY = target.y + (fightPlayer ? _hoverHeight : 1.4f);
-            Vector3 away = _body.position - target;
-            away.y = 0f;
-            if (away.sqrMagnitude < 0.01f)
-                away = transform.forward;
-            desired = (away.normalized * 0.35f + Vector3.up * (holdY - _body.position.y)).normalized;
-            if (Mathf.Abs(holdY - _body.position.y) < 0.25f && dist > hold * 0.7f)
-                desired = Vector3.zero;
-        }
-        else
-        {
-            desired.y += ((fightPlayer ? _hoverHeight : 1.4f) - (_body.position.y - target.y)) * 0.15f;
-            desired.Normalize();
-        }
+        desired = Separate(desired);
+        desired = Steer(desired);
 
-        desired = BlendSeparation(desired);
-        desired = SteerAroundWalls(desired);
-        desired = ClampAltitude(desired, HoverMax);
-        _body.linearVelocity = desired * _flySpeed;
+        Vector3 planarTarget = EnemySenses.Flatten(desired) * _config.MoveSpeed;
+        Vector3 planar = Vector3.MoveTowards(
+            EnemySenses.Flatten(_body.linearVelocity), planarTarget, Acceleration * Time.fixedDeltaTime);
+        float climb = Mathf.Clamp((TargetAltitude() - _body.position.y) * AltitudeGain, -MaxClimbSpeed, MaxClimbSpeed);
+        _body.linearVelocity = new Vector3(planar.x, climb, planar.z);
+
+        FaceTowards(CurrentLookPoint());
     }
 
-    void TickExit()
-    {
-        if (PlayerInsideHome())
-        {
-            BeginHunt();
-            return;
-        }
+    // ---------- movement ----------
 
-        Vector3 target = DoorExitPoint();
-        Vector3 to = target - _body.position;
+    Vector3 EngageMove()
+    {
+        if (!_targeting.SeesPlayer)
+            return DirectionTo(_targeting.LastSeenPos);
+
+        Vector3 to = EnemySenses.Flatten(EnemySenses.PlayerAimPoint() - _body.position);
         float dist = to.magnitude;
-        Vector3 desired = dist > 0.001f ? to / dist : Vector3.zero;
-        desired = BlendSeparation(desired);
-        desired = SteerAroundWalls(desired);
-        desired = ClampAltitude(desired, ExitHoverMax);
-        _body.linearVelocity = desired * _flySpeed;
+        Vector3 toDir = dist > 0.01f ? to / dist : transform.forward;
+        float standoff = _config.StandoffDistance;
 
-        _phaseElapsed += Time.fixedDeltaTime;
-        bool outside = _homeCastle != null
-            && PlanarDistance(_body.position, _homeCastle.transform.position) > 10f;
-        if (dist <= 1.8f || outside || _phaseElapsed >= ExitTimeout)
+        if (dist > standoff + 1.5f)
+            return toDir;
+        if (dist < standoff - 1.5f)
+            return -toDir;
+
+        if (Time.time >= _nextStrafeFlip)
         {
-            if (_phaseElapsed >= ExitTimeout)
-            {
-                _body.position = target;
-                HoldHover();
-            }
-
-            BeginHunt();
+            _nextStrafeFlip = Time.time + Random.Range(StrafeFlipMin, StrafeFlipMax);
+            _orbitSign = -_orbitSign;
         }
+
+        return Vector3.Cross(Vector3.up, toDir) * (_orbitSign * 0.6f);
     }
 
-    void BeginHunt()
+    Vector3 SiegeMove()
     {
-        _exitPhase = ExitPhase.Hunt;
-        _phaseElapsed = 0f;
+        CarcassWallBreakable wall = _targeting.SiegeWall;
+        if (wall == null)
+            return Vector3.zero;
+        Vector3 aim = wall.AimPoint;
+        float hold = Mathf.Min(_config.StandoffDistance, _config.AttackRange * 0.6f);
+        if (Vector3.Distance(_body.position, aim) <= hold
+            && EnemySenses.HasClearPath(_body.position, aim, BoltRadius, transform, wall.transform))
+            return Vector3.zero;
+        return DirectionTo(aim);
     }
 
-    Vector3 SteerAroundWalls(Vector3 desired)
+    Vector3 GuardMove()
     {
-        if (desired.sqrMagnitude < 0.0001f)
+        Vector3 offset = EnemySenses.Flatten(_body.position - _targeting.HomeCenter);
+        if (offset.sqrMagnitude < 0.01f)
+            offset = Vector3.forward;
+        Vector3 radial = offset.normalized;
+        Vector3 tangent = Vector3.Cross(Vector3.up, radial) * _orbitSign;
+        float error = offset.magnitude - GuardRadius;
+        return (tangent * 0.5f - radial * Mathf.Clamp(error * 0.2f, -1f, 1f)).normalized * 0.6f;
+    }
+
+    float TargetAltitude()
+    {
+        float ground = EnemySenses.GroundBelow(_body.position, 0.3f, transform, _body.position.y - _config.HoverHeight);
+        return ground + _config.HoverHeight;
+    }
+
+    Vector3 Steer(Vector3 desired)
+    {
+        Vector3 flat = EnemySenses.Flatten(desired);
+        if (flat.sqrMagnitude < 0.0001f)
             return Vector3.zero;
 
-        float radius = CastRadius();
-        float look = 1.45f;
-        Vector3 origin = _body.position;
-        if (!Physics.SphereCast(origin, radius, desired, out RaycastHit hit, look, ~0, QueryTriggerInteraction.Ignore))
-            return desired.normalized;
-
-        if (ShouldIgnoreSteer(hit.collider))
-            return desired.normalized;
-
-        if (hit.normal.y >= 0.35f)
-        {
-            desired.y = Mathf.Max(desired.y, 0.55f);
-            return desired.normalized;
-        }
-
-        Vector3 along = Vector3.Cross(Vector3.up, hit.normal);
-        if (along.sqrMagnitude < 0.01f)
-            along = transform.right * _orbitSign;
-        along.Normalize();
-        if (Vector3.Dot(along, desired) < 0f)
-            along = -along;
-
-        Vector3 climb = (Vector3.up * 0.7f + along * 0.35f + hit.normal * 0.35f + Flatten(desired) * 0.2f);
-        if (climb.sqrMagnitude < 0.001f)
-            climb = Vector3.up;
-        return climb.normalized;
-    }
-
-    bool HasLineOfSight(Vector3 target, Component allowed = null)
-    {
-        Vector3 origin = _body != null ? _body.position : transform.position;
-        Vector3 delta = target - origin;
-        float dist = delta.magnitude;
-        if (dist < 0.05f)
-            return true;
-
-        Vector3 dir = delta / dist;
-        origin += dir * (CastRadius() + 0.08f);
-
-        for (int i = 0; i < 6; i++)
-        {
-            dist = Vector3.Distance(origin, target);
-            if (dist < 0.05f)
-                return true;
-            dir = (target - origin) / dist;
-            if (!Physics.Raycast(origin, dir, out RaycastHit hit, dist, ~0, QueryTriggerInteraction.Ignore))
-                return true;
-            if (IsPlayer(hit.collider))
-                return true;
-            if (allowed != null &&
-                (hit.collider.transform == allowed.transform
-                 || hit.collider.transform.IsChildOf(allowed.transform)
-                 || hit.collider.GetComponentInParent<CastleWallChunk>() == allowed))
-                return true;
-            if (IsOwnOrAlly(hit.collider) || IsGroundCollider(hit.collider) || IsMage(hit.collider))
-            {
-                origin = hit.point + dir * 0.08f;
-                continue;
-            }
-
-            return false;
-        }
-
-        return false;
-    }
-
-    void FaceTarget()
-    {
-        Vector3 look = _exitPhase != ExitPhase.Hunt
-            ? DoorExitPoint()
-            : (CanFightPlayer() ? AimPoint() : SiegePoint());
-        Vector3 planar = look - transform.position;
-        planar.y = 0f;
-        if (planar.sqrMagnitude < 0.001f)
-            return;
-        transform.rotation = Quaternion.Slerp(
-            transform.rotation,
-            Quaternion.LookRotation(planar.normalized, Vector3.up),
-            1f - Mathf.Exp(-8f * Time.deltaTime));
-    }
-
-    void TryShoot()
-    {
-        if (Time.time < _nextFire)
-            return;
-        if (_exitPhase != ExitPhase.Hunt)
-            return;
-        if (!CanFightPlayer())
-            return;
-
-        Vector3 target = AimPoint();
-        float radius = FullScale * 0.5f;
-        Vector3 muzzle = transform.position + transform.forward * (radius + 0.2f);
-        _nextFire = Time.time + _fireInterval;
-        Vector3 dir = (target - muzzle).normalized;
-        EnemyProjectile.Spawn(muzzle, dir, _projectileSpeed, _projectileDamage, gameObject, _player);
-    }
-
-    Vector3 AimPoint()
-    {
-        return _player != null ? _player.position + Vector3.up * _aimHeight : transform.position;
-    }
-
-    bool CanFightPlayer()
-    {
-        if (_player == null)
-            return false;
-        if (_exitPhase != ExitPhase.Hunt)
-            return false;
-        Vector3 target = AimPoint();
-        if (Vector3.Distance(transform.position, target) > _range)
-            return false;
-        return HasLineOfSight(target);
-    }
-
-    Vector3 SiegePoint()
-    {
-        RefreshSiegeChunk();
-        if (_siegeChunk != null && !_siegeChunk.IsDetached)
-            return _siegeChunk.transform.position;
-        if (_playerCastle != null)
-            return _playerCastle.transform.position + Vector3.up * 2f;
-        return AimPoint();
-    }
-
-    void RefreshSiegeChunk()
-    {
-        if (_siegeChunk != null && !_siegeChunk.IsDetached)
-            return;
-        _siegeChunk = null;
-        if (_playerCastle == null)
-            return;
-
-        var chunks = _playerCastle.GetComponentsInChildren<CastleWallChunk>(true);
-        float best = float.MaxValue;
-        Vector3 origin = transform.position;
-        for (int i = 0; i < chunks.Length; i++)
-        {
-            var c = chunks[i];
-            if (c == null || c.IsDetached)
-                continue;
-            float d = (c.transform.position - origin).sqrMagnitude;
-            if (d < best)
-            {
-                best = d;
-                _siegeChunk = c;
-            }
-        }
-    }
-
-    void CachePlayerCastle()
-    {
-        if (_playerCastle == null)
-            _playerCastle = SquareCastle.FindPlayerOwned();
-    }
-
-    Vector3 DoorExitPoint()
-    {
-        if (_homeCastle == null)
-        {
-            Vector3 fallback = _body != null ? _body.position : transform.position;
-            fallback.y = GroundY(fallback) + _hoverHeight;
-            return fallback;
-        }
-
-        CastleModuleRoot door = FindHomeDoor();
-        Vector3 center = _homeCastle.transform.position;
-        Vector3 exitDir = Flatten(_homeCastle.transform.forward);
-        Vector3 doorPos;
-
-        if (door != null)
-        {
-            doorPos = door.transform.position;
-            Vector3 away = Flatten(doorPos - center);
-            if (away.sqrMagnitude < 0.01f)
-                away = exitDir;
-            else
-                away.Normalize();
-            exitDir = Vector3.Dot(Flatten(door.transform.forward), away) > 0f
-                ? Flatten(door.transform.forward)
-                : Flatten(-door.transform.forward);
-            if (exitDir.sqrMagnitude < 0.01f)
-                exitDir = away;
-            doorPos += exitDir.normalized * 6f;
-        }
-        else
-        {
-            doorPos = _homeCastle.transform.TransformPoint(new Vector3(0f, 0f, 12f));
-            exitDir = Flatten(doorPos - center);
-        }
-
-        doorPos += Flatten(Vector3.Cross(Vector3.up, exitDir)) * (_orbitSign * 1.4f);
-        doorPos.y = GroundY(doorPos) + _hoverHeight;
-        return doorPos;
-    }
-
-    CastleModuleRoot FindHomeDoor()
-    {
-        if (_homeCastle == null)
-            return null;
-        var modules = _homeCastle.GetComponentsInChildren<CastleModuleRoot>(true);
-        for (int i = 0; i < modules.Length; i++)
-        {
-            if (modules[i] != null && modules[i].Kind == CastleModuleKind.Door)
-                return modules[i];
-        }
-
-        return null;
-    }
-
-    Vector3 ClampAltitude(Vector3 desired, float maxHover)
-    {
-        Vector3 pos = _body.position;
-        float ground = GroundY(pos);
-        float minY = ground + HoverMin;
-        float maxY = ground + maxHover;
-
-        if (pos.y < minY)
-        {
-            pos.y = minY;
-            _body.position = pos;
-            desired.y = Mathf.Max(desired.y, 0.55f);
-        }
-        else if (pos.y > maxY)
-            desired.y = -0.65f;
-        else
-            desired.y = Mathf.Clamp(desired.y, -0.25f, 0.45f);
-
-        if (desired.sqrMagnitude < 0.0001f)
-            return Vector3.zero;
-        return desired.normalized;
-    }
-
-    void HoldHover()
-    {
-        Vector3 p = _body.position;
-        p.y = GroundY(p) + _hoverHeight;
-        _body.position = p;
-        _body.linearVelocity = Vector3.zero;
-    }
-
-    float GroundY(Vector3 pos)
-    {
-        Vector3 origin = pos + Vector3.up * 2.8f;
-        var hits = Physics.SphereCastAll(origin, 0.14f, Vector3.down, 10f, ~0, QueryTriggerInteraction.Ignore);
-        float best = float.NegativeInfinity;
-        for (int i = 0; i < hits.Length; i++)
-        {
-            var hit = hits[i];
-            if (hit.collider == _selfCol || IsOwnOrAlly(hit.collider) || IsPlayer(hit.collider))
-                continue;
-            if (hit.normal.y < 0.35f)
-                continue;
-            if (hit.point.y > best)
-                best = hit.point.y;
-        }
-
-        if (best > float.NegativeInfinity)
-            return best;
-
-        var terrain = Terrain.activeTerrain;
-        if (terrain != null)
-            return terrain.SampleHeight(pos) + terrain.transform.position.y;
-        return pos.y;
-    }
-
-    float CastRadius()
-    {
-        float r = _sphere != null ? _sphere.radius : 0.5f;
-        return Mathf.Max(0.12f, r * FullScale * 0.85f);
-    }
-
-    Vector3 BlendSeparation(Vector3 desired)
-    {
-        Vector3 push = Vector3.zero;
-        int count = 0;
-        var hits = Physics.OverlapSphere(_body.position, CastRadius() * 2.4f, ~0, QueryTriggerInteraction.Ignore);
-        for (int i = 0; i < hits.Length; i++)
-        {
-            var col = hits[i];
-            if (col == null || col == _selfCol || !IsAllyUnit(col))
-                continue;
-            Vector3 delta = Flatten(_body.position - col.ClosestPointOnBounds(_body.position));
-            if (delta.sqrMagnitude < 0.0001f)
-                delta = Flatten(transform.right) * _orbitSign;
-            push += delta.normalized;
-            count++;
-        }
-
-        if (count == 0)
+        Vector3 dir = flat.normalized;
+        if (!Physics.SphereCast(_body.position, CastRadius(), dir, out RaycastHit hit, SteerLookAhead, ~0, QueryTriggerInteraction.Ignore))
             return desired;
-        Vector3 mixed = desired.sqrMagnitude > 0.0001f
-            ? desired.normalized + push.normalized * 0.7f
-            : push.normalized;
-        return mixed.sqrMagnitude > 0.0001f ? mixed.normalized : desired;
+        Collider col = hit.collider;
+        if (col.transform.IsChildOf(transform) || EnemySenses.IsEnemy(col) || EnemySenses.IsPlayer(col))
+            return desired;
+        if (_targeting.Current == EnemyTargeting.Goal.Exit && _targeting.HomeCastle != null
+            && col.transform.IsChildOf(_targeting.HomeCastle))
+            return desired;
+
+        // Скользим вдоль препятствия в сторону цели, без телепортов и рывков вверх.
+        Vector3 slide = Vector3.ProjectOnPlane(dir, hit.normal);
+        slide.y = 0f;
+        if (slide.sqrMagnitude < 0.04f)
+            slide = Vector3.Cross(Vector3.up, hit.normal) * _orbitSign;
+        return slide.normalized * flat.magnitude;
     }
 
-    bool IsPlayer(Collider col)
+    Vector3 Separate(Vector3 desired)
     {
-        if (col == null || _player == null)
-            return false;
-        return col.transform == _player || col.transform.IsChildOf(_player)
-               || col.GetComponentInParent<PlayerHealth>() != null;
-    }
-
-    bool IsOwnOrAlly(Collider col)
-    {
-        if (col == null)
-            return true;
-        if (col == _selfCol || col.transform == transform || col.transform.IsChildOf(transform))
-            return true;
-        return IsAllyUnit(col);
-    }
-
-    static bool IsAllyUnit(Collider col)
-    {
-        return col.GetComponentInParent<EnemyUnit>() != null
-               || col.GetComponentInParent<EnemyRoller>() != null;
-    }
-
-    static bool IsGroundCollider(Collider col)
-    {
-        return col.GetComponent<TerrainCollider>() != null
-               || col.GetComponent<CastlePlatform>() != null;
-    }
-
-    bool ShouldIgnoreSteer(Collider col)
-    {
-        if (col == null || col == _selfCol || IsPlayer(col) || IsMage(col))
-            return true;
-        if (IsGroundCollider(col))
-            return true;
-        if (_homeCastle != null && col.transform.IsChildOf(_homeCastle.transform))
-            return true;
-        return false;
-    }
-
-    static bool IsMage(Collider col)
-    {
-        if (col.GetComponentInParent<EnemyCastleMage>() != null)
-            return true;
-        Transform t = col.transform;
-        while (t != null)
+        int count = Physics.OverlapSphereNonAlloc(_body.position, CastRadius() * 3f, Neighbours, ~0, QueryTriggerInteraction.Ignore);
+        Vector3 push = Vector3.zero;
+        for (int i = 0; i < count; i++)
         {
-            if (t.name == "MageHeart" || t.name == "EnemyMage")
-                return true;
-            t = t.parent;
+            Collider col = Neighbours[i];
+            if (col == null || col.transform.IsChildOf(transform) || !EnemySenses.IsEnemy(col))
+                continue;
+            Vector3 away = EnemySenses.Flatten(_body.position - col.bounds.center);
+            if (away.sqrMagnitude > 0.0001f)
+                push += away.normalized;
         }
 
-        return false;
+        return push.sqrMagnitude > 0.0001f ? desired + push.normalized * 0.7f : desired;
     }
+
+    // ---------- attack ----------
+
+    void TickAttack(float dt)
+    {
+        switch (_attack)
+        {
+            case AttackState.Idle:
+                TryBeginAttack();
+                break;
+            case AttackState.Charging:
+                _attackTimer -= dt;
+                if (_attackTimer <= 0f)
+                {
+                    _attack = AttackState.Bursting;
+                    _shotsLeft = _config.BurstCount;
+                    _attackTimer = 0f;
+                }
+                break;
+            case AttackState.Bursting:
+                _attackTimer -= dt;
+                if (_attackTimer > 0f)
+                    break;
+                if (!FireShot())
+                {
+                    EndAttack(CancelledShotCooldown);
+                    break;
+                }
+
+                _shotsLeft--;
+                _attackTimer = _config.BurstInterval;
+                if (_shotsLeft <= 0)
+                    EndAttack(_config.RollCooldown());
+                break;
+        }
+    }
+
+    void TryBeginAttack()
+    {
+        if (Time.time < _nextAttack || _targeting.Current == EnemyTargeting.Goal.Exit)
+            return;
+        if (EnemySenses.IsInsideCastle(_targeting.HomeCastle, _body.position))
+            return;
+
+        if (_targeting.Current == EnemyTargeting.Goal.Engage && _targeting.SeesPlayer)
+        {
+            if (Vector3.Distance(_body.position, EnemySenses.PlayerAimPoint()) > _config.AttackRange)
+                return;
+            if (!EnemyAttackTokens.TryAcquire(this))
+                return;
+            _attackOnPlayer = true;
+        }
+        else if (_targeting.Current == EnemyTargeting.Goal.Siege && _targeting.SiegeWall != null)
+        {
+            CarcassWallBreakable wall = _targeting.SiegeWall;
+            if (Vector3.Distance(_body.position, wall.AimPoint) > _config.AttackRange)
+                return;
+            if (!EnemySenses.HasClearPath(_body.position, wall.AimPoint, BoltRadius, transform, wall.transform))
+                return;
+            _attackOnPlayer = false;
+        }
+        else
+        {
+            return;
+        }
+
+        _attack = AttackState.Charging;
+        _attackTimer = _config.TelegraphTime;
+    }
+
+    /// <summary>Returns false when the shot is no longer clean — the burst is then cancelled.</summary>
+    bool FireShot()
+    {
+        Transform targetRoot;
+        Vector3 aim;
+        if (_attackOnPlayer)
+        {
+            targetRoot = EnemySenses.Player;
+            if (targetRoot == null)
+                return false;
+            aim = EnemySenses.PlayerAimPoint();
+            float travel = Vector3.Distance(_body.position, aim) / Mathf.Max(1f, _config.ProjectileSpeed);
+            aim += EnemySenses.PlayerVelocity() * (travel * _config.LeadFactor);
+        }
+        else
+        {
+            CarcassWallBreakable wall = _targeting.SiegeWall;
+            if (wall == null || wall.IsBreached)
+                return false;
+            targetRoot = wall.transform;
+            aim = wall.AimPoint;
+        }
+
+        Vector3 dir = (aim - _body.position).normalized;
+        // Дуло — по направлению выстрела, а не по forward, который доворачивается с задержкой.
+        Vector3 muzzle = _body.position + dir * (CastRadius() + BoltRadius + 0.1f);
+        if (!EnemySenses.HasClearPath(muzzle, aim, BoltRadius, transform, targetRoot))
+            return false;
+
+        float damage = _attackOnPlayer ? _config.Damage : _config.SiegeDamage;
+        EnemyProjectile.Spawn(muzzle, dir, _config.ProjectileSpeed, damage, gameObject, homeOnPlayer: _attackOnPlayer);
+        return true;
+    }
+
+    void EndAttack(float cooldown)
+    {
+        _attack = AttackState.Idle;
+        _nextAttack = Time.time + Mathf.Max(0.1f, cooldown);
+        EnemyAttackTokens.Release(this);
+    }
+
+    float AttackCharge()
+    {
+        if (_attack == AttackState.Bursting)
+            return 1f;
+        if (_attack == AttackState.Charging)
+            return 1f - _attackTimer / Mathf.Max(0.01f, _config.TelegraphTime);
+        return 0f;
+    }
+
+    // ---------- lifecycle ----------
 
     void TickGrow()
     {
         _growElapsed += Time.deltaTime;
         float t = Mathf.Clamp01(_growElapsed / Mathf.Max(0.05f, _growDuration));
         transform.localScale = Vector3.one * Mathf.Lerp(MinGrowScale, FullScale, t);
-        if (t < 1f)
-            return;
-        Release();
+        if (t >= 1f)
+            Release();
     }
 
     void Release()
@@ -593,45 +374,35 @@ public sealed class EnemyUnit : MonoBehaviour, IDamageable
             return;
         _released = true;
 
-        _homeCastle = GetComponentInParent<SquareCastle>();
-        IgnoreHomeObstacles(true);
+        if (_spawnCastle == null)
+            _spawnCastle = EnemyNav.HomeCastleOf(transform);
         transform.SetParent(null, true);
+        _view = new EnemyBodyView(transform, _color, Vector3.one * FullScale);
 
-        Vector3 inward = Flatten(
-            (_homeCastle != null ? _homeCastle.transform.position : transform.position) - transform.position);
-        if (inward.sqrMagnitude < 0.01f)
-            inward = _homeCastle != null ? Flatten(-_homeCastle.transform.forward) : Flatten(transform.forward);
-        inward.Normalize();
-        transform.position += inward * 0.35f;
-        transform.localScale = Vector3.one * FullScale;
-        _exitPhase = PlayerInsideHome() || _homeCastle == null ? ExitPhase.Hunt : ExitPhase.Exit;
-        _phaseElapsed = 0f;
+        // Спавнеры каркаса стоят снаружи стен — выход через дверь нужен, только если родились внутри.
+        if (_targeting.Begin(_spawnCastle, transform.position))
+            EnemyNav.IgnoreCastle(_sphere, _spawnCastle, true);
 
-        if (_body == null)
-            _body = GetComponent<Rigidbody>();
-        if (_body != null)
-        {
-            _body.constraints = RigidbodyConstraints.FreezeRotation;
-            _body.isKinematic = false;
-            _body.useGravity = false;
-            _body.linearDamping = 1.8f;
-            _body.angularDamping = 4f;
-            _body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-            _body.maxDepenetrationVelocity = 8f;
-            _body.interpolation = RigidbodyInterpolation.Interpolate;
-            HoldHover();
-            _body.linearVelocity = inward * (_flySpeed * 0.5f);
-        }
+        _body.constraints = RigidbodyConstraints.FreezeRotation;
+        _body.isKinematic = false;
+        _body.useGravity = false;
+        _body.linearDamping = 0f;
+        _body.angularDamping = 4f;
+        _body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        _body.maxDepenetrationVelocity = 4f;
+        _body.interpolation = RigidbodyInterpolation.Interpolate;
 
-        _nextFire = Time.time + 0.45f;
+        _nextAttack = Time.time + _config.RollCooldown() * 0.5f;
     }
 
     public void ApplyDamage(float amount, in DamageInfo info)
     {
-        if (_dead || amount <= 0f)
+        if (_dead || amount <= 0f || !info.FromPlayer)
             return;
 
         _health -= amount;
+        _view?.Flash();
+        _targeting.NotifyDamaged();
         if (_health > 0f)
             return;
 
@@ -640,59 +411,37 @@ public sealed class EnemyUnit : MonoBehaviour, IDamageable
         Destroy(gameObject);
     }
 
-    void IgnoreHomeObstacles(bool ignore)
+    // ---------- helpers ----------
+
+    Vector3 CurrentLookPoint()
     {
-        if (_selfCol == null)
-            _selfCol = GetComponent<Collider>();
-        if (_selfCol == null)
+        if (_targeting.Current == EnemyTargeting.Goal.Engage)
+            return _targeting.SeesPlayer ? EnemySenses.PlayerAimPoint() : _targeting.LastSeenPos;
+        if (_targeting.Current == EnemyTargeting.Goal.Siege && _targeting.SiegeWall != null)
+            return _targeting.SiegeWall.AimPoint;
+        return _body.position + _body.linearVelocity;
+    }
+
+    void FaceTowards(Vector3 point)
+    {
+        Vector3 planar = EnemySenses.Flatten(point - transform.position);
+        if (planar.sqrMagnitude < 0.001f)
             return;
-
-        if (_homeCastle != null)
-        {
-            var cols = _homeCastle.GetComponentsInChildren<Collider>(true);
-            for (int i = 0; i < cols.Length; i++)
-            {
-                if (cols[i] != null && cols[i] != _selfCol)
-                    Physics.IgnoreCollision(_selfCol, cols[i], ignore);
-            }
-        }
+        transform.rotation = Quaternion.Slerp(
+            transform.rotation,
+            Quaternion.LookRotation(planar.normalized, Vector3.up),
+            1f - Mathf.Exp(-8f * Time.fixedDeltaTime));
     }
 
-    bool PlayerInsideHome()
+    Vector3 DirectionTo(Vector3 point)
     {
-        if (_player == null || _homeCastle == null)
-            return false;
-        return PlanarDistance(_player.position, _homeCastle.transform.position) <= HomeYardRadius;
+        Vector3 flat = EnemySenses.Flatten(point - _body.position);
+        return flat.sqrMagnitude > 0.04f ? flat.normalized : Vector3.zero;
     }
 
-    void CachePlayer()
+    float CastRadius()
     {
-        var go = GameObject.FindGameObjectWithTag("Player");
-        _player = go != null ? go.transform : null;
-    }
-
-    void ApplyColor()
-    {
-        var renderer = GetComponent<MeshRenderer>();
-        if (renderer == null)
-            return;
-        Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-        if (shader != null)
-            renderer.sharedMaterial = new Material(shader);
-        var block = new MaterialPropertyBlock();
-        block.SetColor("_BaseColor", _color);
-        block.SetColor("_Color", _color);
-        renderer.SetPropertyBlock(block);
-    }
-
-    static Vector3 Flatten(Vector3 v)
-    {
-        v.y = 0f;
-        return v;
-    }
-
-    static float PlanarDistance(Vector3 a, Vector3 b)
-    {
-        return Flatten(a - b).magnitude;
+        float r = _sphere != null ? _sphere.radius : 0.5f;
+        return Mathf.Max(0.12f, r * FullScale * 0.9f);
     }
 }

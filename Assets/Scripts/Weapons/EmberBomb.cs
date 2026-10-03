@@ -10,10 +10,26 @@ public sealed class EmberBomb : MonoBehaviour
     bool _hurtPlayer;
     GameObject _owner;
 
+    // Подброс вверх у ручной пусковой — без него бомба игрока летит слишком плоско.
+    const float LauncherUpKick = 3.2f;
+
     public static EmberBomb Spawn(
         Vector3 origin,
         Vector3 direction,
         float speed,
+        float damage,
+        float radius,
+        GameObject owner,
+        bool hurtPlayer)
+    {
+        Vector3 velocity = direction.normalized * speed + Vector3.up * LauncherUpKick;
+        return SpawnWithVelocity(origin, velocity, damage, radius, owner, hurtPlayer);
+    }
+
+    /// <summary>Exact launch velocity — for enemies that solve the ballistic arc themselves.</summary>
+    public static EmberBomb SpawnWithVelocity(
+        Vector3 origin,
+        Vector3 velocity,
         float damage,
         float radius,
         GameObject owner,
@@ -34,7 +50,7 @@ public sealed class EmberBomb : MonoBehaviour
         body.mass = 0.8f;
         body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         body.interpolation = RigidbodyInterpolation.Interpolate;
-        body.linearVelocity = direction.normalized * speed + Vector3.up * 3.2f;
+        body.linearVelocity = velocity;
 
         if (owner != null)
         {
@@ -84,6 +100,9 @@ public sealed class EmberBomb : MonoBehaviour
         if (_owner != null &&
             (other.transform == _owner.transform || other.transform.IsChildOf(_owner.transform)))
             return;
+        // Вражеская бомба пролетает сквозь своих, а не рвётся о соседа по отряду.
+        if (_hurtPlayer && EnemySenses.IsEnemy(other))
+            return;
         Explode(transform.position);
     }
 
@@ -93,19 +112,8 @@ public sealed class EmberBomb : MonoBehaviour
             return;
         _spent = true;
         HitSparkVfx.PlayDust(point, Vector3.up, 14);
-        DamageUtility.ApplyInRadius(point, _radius, _damage, Vector3.up, _owner);
-
-        if (_hurtPlayer)
-        {
-            var player = GameObject.FindGameObjectWithTag("Player");
-            if (player != null)
-            {
-                var hp = player.GetComponent<PlayerHealth>();
-                if (hp != null && Vector3.Distance(player.transform.position, point) <= _radius + 0.6f)
-                    hp.ApplyDamage(_damage, new DamageInfo(point, Vector3.up, Vector3.up));
-            }
-        }
-
+        // Вражеская бомба бьёт игрока и его стены, но не своих; бомба игрока — наоборот.
+        DamageUtility.ApplyInRadius(point, _radius, _damage, Vector3.up, _owner, fromPlayer: !_hurtPlayer);
         Destroy(gameObject);
     }
 }

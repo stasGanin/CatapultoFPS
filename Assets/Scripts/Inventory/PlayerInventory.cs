@@ -41,7 +41,8 @@ public class PlayerInventory : MonoBehaviour, IInventorySlots
     public bool IsFurniturePlacing => Furniture != null && Furniture.IsPlacing;
 
     public bool BlocksGameplayInput =>
-        _menuOpen
+        IsDead
+        || _menuOpen
         || IsCraftOpen
         || IsMageOpen
         || IsFurniturePlacing
@@ -59,6 +60,17 @@ public class PlayerInventory : MonoBehaviour, IInventorySlots
         || (CastleBuild != null && CastleBuild.BlocksLook);
 
     public bool IsMapOpen => WorldMapUI.IsOpen;
+    // PlayerHealth добавляется бутстрапом позже Awake инвентаря — ищем лениво.
+    PlayerHealth _health;
+    bool IsDead
+    {
+        get
+        {
+            if (_health == null)
+                _health = GetComponent<PlayerHealth>();
+            return _health != null && _health.IsDead;
+        }
+    }
     public bool IsSettingsOpen => SettingsMenuUI.IsOpen;
 
     CraftMenuController _craftMenu;
