@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// Автоогонь вражеской башни: бьёт по игроку, если виден, иначе по нашему замку.
-/// Стреляет болтами врага (урон «не от игрока»), баланс — в Resources/Enemies/TowerConfig.
+/// Включается кнопкой F7 (<see cref="EnemySpawnDebugHud"/>). Стреляет болтами врага (урон «не от игрока»), баланс — в Resources/Enemies/TowerConfig.
 /// </summary>
 public sealed class EnemyTowerFire : MonoBehaviour
 {
@@ -25,7 +25,7 @@ public sealed class EnemyTowerFire : MonoBehaviour
 
     void Update()
     {
-        if (!TryPickTarget(out Vector3 point))
+        if (!EnemySpawnDebugHud.TowersEnabled || !TryPickTarget(out Vector3 point))
             return;
 
         Vector3 origin = _tower.Muzzle.position;

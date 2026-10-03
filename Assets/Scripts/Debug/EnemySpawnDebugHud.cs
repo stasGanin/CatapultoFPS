@@ -5,15 +5,18 @@ using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
 /// <summary>
-/// Debug toggle for enemy castle spawners. Off until pressed (or F8).
+/// Debug toggles for enemy castle spawners (F8) and enemy castle towers (F7). Both off until pressed.
 /// </summary>
 [DefaultExecutionOrder(-100)]
 public sealed class EnemySpawnDebugHud : MonoBehaviour
 {
     public static bool SpawningEnabled { get; private set; }
+    public static bool TowersEnabled { get; private set; }
 
     Text _label;
     Image _background;
+    Text _towersLabel;
+    Image _towersBackground;
     bool _applied;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -29,6 +32,7 @@ public sealed class EnemySpawnDebugHud : MonoBehaviour
     {
         // По умолчанию враги выключены — включаются по F8, когда нужен бой.
         SpawningEnabled = false;
+        TowersEnabled = false;
         _applied = false;
         EnsureEventSystem();
         Build();
@@ -40,6 +44,8 @@ public sealed class EnemySpawnDebugHud : MonoBehaviour
         Keyboard kb = Keyboard.current;
         if (kb != null && kb.f8Key.wasPressedThisFrame)
             SetEnabled(!SpawningEnabled);
+        if (kb != null && kb.f7Key.wasPressedThisFrame)
+            SetTowersEnabled(!TowersEnabled);
 
         ApplyGate();
     }
@@ -50,6 +56,12 @@ public sealed class EnemySpawnDebugHud : MonoBehaviour
             return;
         SpawningEnabled = on;
         _applied = false;
+        RefreshVisual();
+    }
+
+    void SetTowersEnabled(bool on)
+    {
+        TowersEnabled = on;
         RefreshVisual();
     }
 
@@ -84,10 +96,16 @@ public sealed class EnemySpawnDebugHud : MonoBehaviour
 
     void RefreshVisual()
     {
-        if (_label != null)
-            _label.text = SpawningEnabled ? "Enemies ON    [F8]" : "Enemies OFF    [F8]";
-        if (_background != null)
-            _background.color = SpawningEnabled
+        ApplyToggleVisual(_label, _background, SpawningEnabled ? "Enemies ON    [F8]" : "Enemies OFF    [F8]", SpawningEnabled);
+        ApplyToggleVisual(_towersLabel, _towersBackground, TowersEnabled ? "Towers ON    [F7]" : "Towers OFF    [F7]", TowersEnabled);
+    }
+
+    static void ApplyToggleVisual(Text label, Image background, string text, bool isOn)
+    {
+        if (label != null)
+            label.text = text;
+        if (background != null)
+            background.color = isOn
                 ? new Color(0.42f, 0.62f, 0.36f, 0.92f)
                 : new Color(0.55f, 0.38f, 0.32f, 0.92f);
     }
@@ -105,26 +123,32 @@ public sealed class EnemySpawnDebugHud : MonoBehaviour
         UiScale.Configure(canvasGo.AddComponent<CanvasScaler>());
         canvasGo.AddComponent<GraphicRaycaster>();
 
-        var go = new GameObject("SpawnToggle", typeof(RectTransform));
-        go.transform.SetParent(canvasGo.transform, false);
+        (_background, _label) = CreateToggle(canvasGo.transform, font, "SpawnToggle", -24f, () => SetEnabled(!SpawningEnabled));
+        (_towersBackground, _towersLabel) = CreateToggle(canvasGo.transform, font, "TowersToggle", -72f, () => SetTowersEnabled(!TowersEnabled));
+    }
+
+    static (Image background, Text label) CreateToggle(Transform parent, Font font, string name, float y, UnityEngine.Events.UnityAction onClick)
+    {
+        var go = new GameObject(name, typeof(RectTransform));
+        go.transform.SetParent(parent, false);
         var rt = (RectTransform)go.transform;
         rt.anchorMin = rt.anchorMax = new Vector2(1f, 1f);
         rt.pivot = new Vector2(1f, 1f);
-        rt.anchoredPosition = new Vector2(-24f, -24f);
+        rt.anchoredPosition = new Vector2(-24f, y);
         rt.sizeDelta = new Vector2(200f, 40f);
 
-        _background = go.AddComponent<Image>();
-        _background.color = new Color(0.10f, 0.13f, 0.18f, 0.92f);
+        var background = go.AddComponent<Image>();
+        background.color = new Color(0.10f, 0.13f, 0.18f, 0.92f);
 
         var btn = go.AddComponent<Button>();
-        btn.targetGraphic = _background;
+        btn.targetGraphic = background;
         btn.transition = Selectable.Transition.ColorTint;
         var colors = btn.colors;
         colors.normalColor = Color.white;
         colors.highlightedColor = new Color(1f, 0.95f, 0.85f, 1f);
         colors.pressedColor = new Color(0.82f, 0.78f, 0.7f, 1f);
         btn.colors = colors;
-        btn.onClick.AddListener(() => SetEnabled(!SpawningEnabled));
+        btn.onClick.AddListener(onClick);
 
         var textGo = new GameObject("Label", typeof(RectTransform));
         textGo.transform.SetParent(go.transform, false);
@@ -133,13 +157,15 @@ public sealed class EnemySpawnDebugHud : MonoBehaviour
         textRt.anchorMax = Vector2.one;
         textRt.offsetMin = new Vector2(8f, 2f);
         textRt.offsetMax = new Vector2(-8f, -2f);
-        _label = textGo.AddComponent<Text>();
-        _label.font = font;
-        _label.fontSize = 16;
-        _label.fontStyle = FontStyle.Bold;
-        _label.alignment = TextAnchor.MiddleCenter;
-        _label.color = Color.white;
-        _label.raycastTarget = false;
+        var label = textGo.AddComponent<Text>();
+        label.font = font;
+        label.fontSize = 16;
+        label.fontStyle = FontStyle.Bold;
+        label.alignment = TextAnchor.MiddleCenter;
+        label.color = Color.white;
+        label.raycastTarget = false;
+
+        return (background, label);
     }
 
     static void EnsureEventSystem()
