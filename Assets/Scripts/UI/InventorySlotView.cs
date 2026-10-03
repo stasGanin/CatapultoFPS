@@ -5,7 +5,8 @@ using UnityEngine.UI;
 /// <summary>
 /// Inventory cell bound to any IInventorySlots host. Drag transfers between player and chest.
 /// </summary>
-public class InventorySlotView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler, IPointerClickHandler
+public class InventorySlotView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler, IPointerClickHandler,
+    IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] Image _background;
     [SerializeField] Image _icon;
@@ -152,10 +153,26 @@ public class InventorySlotView : MonoBehaviour, IBeginDragHandler, IDragHandler,
             _ui.SelectHotbarFromUi(_slotIndex);
     }
 
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        // Во время перетаскивания тултип только мешает.
+        if (_host == null || _dragSource != null)
+            return;
+        InventorySlot slot = _host.GetSlot(_slotIndex);
+        if (!slot.IsEmpty)
+            InventoryTooltip.Show(slot.Item, slot.Count);
+    }
+
+    public void OnPointerExit(PointerEventData eventData) => InventoryTooltip.Hide();
+
+    // Инвентарь закрыли, пока курсор был над слотом, — OnPointerExit уже не придёт.
+    void OnDisable() => InventoryTooltip.Hide();
+
     public void OnBeginDrag(PointerEventData eventData)
     {
         if (_host == null)
             return;
+        InventoryTooltip.Hide();
 
         InventorySlot slot = _host.GetSlot(_slotIndex);
         if (slot.IsEmpty)

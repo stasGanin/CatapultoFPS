@@ -17,3 +17,4 @@ MonoBehaviour:
   _kind: 2
   _iconColor: {r: 0.55, g: 0.4, b: 0.22, a: 1}
   _maxStack: 1
+  _description: Mines stone and ore; breaks loose castle rubble.

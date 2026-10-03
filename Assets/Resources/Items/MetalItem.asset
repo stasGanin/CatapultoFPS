@@ -17,3 +17,4 @@ MonoBehaviour:
   _kind: 3
   _iconColor: {r: 0.62, g: 0.66, b: 0.72, a: 1}
   _maxStack: 50
+  _description: Smelted ingot. Weapons, upgrades and the mage.
