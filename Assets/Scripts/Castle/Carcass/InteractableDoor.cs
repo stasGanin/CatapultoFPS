@@ -17,7 +17,7 @@ public sealed class InteractableDoor : MonoBehaviour, IPlayerInteractable
     public void BindLeaf(Transform leaf)
     {
         Transform source = leaf != null ? leaf : transform;
-        _leaf = EnsureHinge(source);
+        _leaf = EnsureHinge(source, transform);
         _closed = _leaf.localRotation;
         _open = _closed * Quaternion.Euler(0f, OpenAngle, 0f);
         if (source.GetComponent<Collider>() == null)
@@ -109,24 +109,44 @@ public sealed class InteractableDoor : MonoBehaviour, IPlayerInteractable
         return b;
     }
 
-    static Transform EnsureHinge(Transform leaf)
+    /// <summary>
+    /// Петля — у бокового края створки, в осях модуля (стена вдоль локальной Z).
+    /// Раньше петля стояла посередине ширины в мировых осях: открытая створка вставала поперёк проёма.
+    /// </summary>
+    static Transform EnsureHinge(Transform leaf, Transform module)
     {
         if (leaf.parent != null && leaf.parent.name == "DoorHinge")
             return leaf.parent;
 
-        var rend = leaf.GetComponent<Renderer>();
         Vector3 hingeWorld = leaf.position;
-        if (rend != null)
+        var filter = leaf.GetComponent<MeshFilter>();
+        if (filter != null && filter.sharedMesh != null)
         {
-            Bounds b = rend.bounds;
-            hingeWorld = new Vector3(b.min.x, b.min.y, b.center.z);
+            Bounds b = LocalBounds(filter, module);
+            hingeWorld = module.TransformPoint(new Vector3(b.center.x, b.min.y, b.min.z));
         }
 
         var hinge = new GameObject("DoorHinge");
-        hinge.transform.SetPositionAndRotation(hingeWorld, leaf.rotation);
+        hinge.transform.SetPositionAndRotation(hingeWorld, module.rotation);
         hinge.transform.SetParent(leaf.parent, true);
         leaf.SetParent(hinge.transform, true);
         return hinge.transform;
+    }
+
+    static Bounds LocalBounds(MeshFilter filter, Transform space)
+    {
+        Bounds mesh = filter.sharedMesh.bounds;
+        var local = new Bounds(space.InverseTransformPoint(filter.transform.TransformPoint(mesh.center)), Vector3.zero);
+        for (int i = 0; i < 8; i++)
+        {
+            var corner = new Vector3(
+                (i & 1) == 0 ? mesh.min.x : mesh.max.x,
+                (i & 2) == 0 ? mesh.min.y : mesh.max.y,
+                (i & 4) == 0 ? mesh.min.z : mesh.max.z);
+            local.Encapsulate(space.InverseTransformPoint(filter.transform.TransformPoint(corner)));
+        }
+
+        return local;
     }
 
     static Transform FindLeaf(Transform root)
