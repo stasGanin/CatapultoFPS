@@ -121,7 +121,7 @@ public sealed class PlayerHealthHud : MonoBehaviour
         {
             panelImg.sprite = parchment;
             panelImg.type = Image.Type.Sliced;
-            panelImg.color = Color.white;
+            panelImg.color = InventoryUiTheme.PanelTint;
         }
         else
             panelImg.color = InventoryUiTheme.PanelTint;
@@ -154,7 +154,7 @@ public sealed class PlayerHealthHud : MonoBehaviour
         trackRt.sizeDelta = new Vector2(-66f, 18f);
 
         var trackImg = trackGo.AddComponent<Image>();
-        trackImg.color = new Color(0.78f, 0.72f, 0.62f, 0.95f);
+        trackImg.color = InventoryUiTheme.BarTrack;
 
         var fillGo = new GameObject("Fill", typeof(RectTransform));
         fillGo.transform.SetParent(trackGo.transform, false);
@@ -181,7 +181,7 @@ public sealed class PlayerHealthHud : MonoBehaviour
         _label.font = font;
         _label.fontSize = 15;
         _label.fontStyle = FontStyle.Bold;
-        _label.color = InventoryUiTheme.TextDark;
+        _label.color = InventoryUiTheme.TextPrimary;
         _label.alignment = TextAnchor.MiddleLeft;
         _label.raycastTarget = false;
     }
@@ -228,7 +228,7 @@ public sealed class PlayerHealthHud : MonoBehaviour
         {
             panelImg.sprite = parchment;
             panelImg.type = Image.Type.Sliced;
-            panelImg.color = Color.white;
+            panelImg.color = InventoryUiTheme.PanelTint;
         }
         else
             panelImg.color = InventoryUiTheme.PanelTint;
@@ -259,7 +259,7 @@ public sealed class PlayerHealthHud : MonoBehaviour
         trackRt.anchoredPosition = new Vector2(48f, -2f);
         trackRt.sizeDelta = new Vector2(-60f, 16f);
         var trackImg = trackGo.AddComponent<Image>();
-        trackImg.color = new Color(0.70f, 0.76f, 0.86f, 0.95f);
+        trackImg.color = InventoryUiTheme.BarTrack;
 
         var fillGo = new GameObject("Fill", typeof(RectTransform));
         fillGo.transform.SetParent(trackGo.transform, false);
@@ -286,7 +286,7 @@ public sealed class PlayerHealthHud : MonoBehaviour
         _manaLabel.font = font;
         _manaLabel.fontSize = 14;
         _manaLabel.fontStyle = FontStyle.Bold;
-        _manaLabel.color = InventoryUiTheme.TextDark;
+        _manaLabel.color = InventoryUiTheme.TextPrimary;
         _manaLabel.alignment = TextAnchor.MiddleLeft;
         _manaLabel.raycastTarget = false;
         _manaLabel.text = "100  /  100";

@@ -193,7 +193,7 @@ public sealed class SettingsMenuUI : MonoBehaviour
         dim.transform.SetParent(_root.transform, false);
         Stretch((RectTransform)dim.transform);
         var dimImg = dim.AddComponent<Image>();
-        dimImg.color = new Color(0.02f, 0.03f, 0.05f, 0.78f);
+        dimImg.color = InventoryUiTheme.ScreenDim;
 
         var panel = new GameObject("SettingsPanel", typeof(RectTransform));
         panel.transform.SetParent(_root.transform, false);
@@ -201,7 +201,7 @@ public sealed class SettingsMenuUI : MonoBehaviour
         panelRt.anchorMin = panelRt.anchorMax = new Vector2(0.5f, 0.5f);
         panelRt.sizeDelta = new Vector2(580f, 640f);
         var panelImg = panel.AddComponent<Image>();
-        panelImg.color = new Color(0.10f, 0.13f, 0.18f, 0.98f);
+        InventoryUiTheme.StylePanel(panelImg);
 
         var title = CreateText(panel.transform, "Settings", 26, TextAnchor.MiddleCenter);
         PinTop(title.rectTransform, 24f, 18f, 24f, 40f);
@@ -237,7 +237,7 @@ public sealed class SettingsMenuUI : MonoBehaviour
 
         var hint = CreateText(panel.transform, "Esc opens this menu in the field. Changes save immediately.", 13, TextAnchor.MiddleCenter);
         PinBottom(hint.rectTransform, 20f, 82f, 20f, 28f);
-        hint.color = new Color(0.72f, 0.76f, 0.82f, 1f);
+        hint.color = InventoryUiTheme.TextSecondary;
 
         RefreshValues();
     }
@@ -310,13 +310,9 @@ public sealed class SettingsMenuUI : MonoBehaviour
         go.transform.SetParent(parent, false);
         ((RectTransform)go.transform).sizeDelta = size;
         var img = go.AddComponent<Image>();
-        img.color = new Color(0.22f, 0.48f, 0.82f, 1f);
         var btn = go.AddComponent<Button>();
         btn.targetGraphic = img;
-        var colors = btn.colors;
-        colors.highlightedColor = new Color(0.32f, 0.60f, 0.95f, 1f);
-        colors.pressedColor = new Color(0.16f, 0.34f, 0.62f, 1f);
-        btn.colors = colors;
+        InventoryUiTheme.StyleButton(img, btn);
         btn.onClick.AddListener(onClick);
         var text = CreateText(go.transform, label, 15, TextAnchor.MiddleCenter);
         Stretch(text.rectTransform);
@@ -334,7 +330,7 @@ public sealed class SettingsMenuUI : MonoBehaviour
         text.font = _font;
         text.fontSize = size;
         text.alignment = align;
-        text.color = new Color(0.93f, 0.95f, 0.98f, 1f);
+        text.color = InventoryUiTheme.TextPrimary;
         text.text = value;
         text.raycastTarget = false;
         return text;

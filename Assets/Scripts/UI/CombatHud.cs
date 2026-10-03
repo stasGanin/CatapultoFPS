@@ -97,7 +97,7 @@ public sealed class CombatHud : MonoBehaviour
         }
 
         _wallsLabel.text = $"Walls  {standing}/{total}";
-        _wallsLabel.color = standing < total ? InventoryUiTheme.MissingRed : InventoryUiTheme.TextDark;
+        _wallsLabel.color = standing < total ? InventoryUiTheme.MissingRed : InventoryUiTheme.TextPrimary;
 
         int chronum = _inventory != null && _chronum != null ? _inventory.CountItem(_chronum) : 0;
         _chronumLabel.text = $"Chronum  {chronum}";
@@ -156,7 +156,7 @@ public sealed class CombatHud : MonoBehaviour
 
         Image legend = UiFactory.CreatePanel(root, "Legend", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -24f), new Vector2(520f, 62f));
         _legend = legend.gameObject;
-        Text legendText = UiFactory.CreateText(legend.transform, "LegendText", 16, InventoryUiTheme.TextDark, TextAnchor.MiddleCenter);
+        Text legendText = UiFactory.CreateText(legend.transform, "LegendText", 16, InventoryUiTheme.TextPrimary, TextAnchor.MiddleCenter);
         legendText.supportRichText = true;
         legendText.text = LegendText;
     }
@@ -164,7 +164,7 @@ public sealed class CombatHud : MonoBehaviour
     static Text Line(Transform parent, string name, float y)
     {
         RectTransform rt = UiFactory.CreateRect(parent, name, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(18f, y), new Vector2(224f, 22f));
-        Text text = UiFactory.CreateText(rt, "Text", 17, InventoryUiTheme.TextDark, TextAnchor.UpperLeft);
+        Text text = UiFactory.CreateText(rt, "Text", 17, InventoryUiTheme.TextPrimary, TextAnchor.UpperLeft);
         text.fontStyle = FontStyle.Bold;
         return text;
     }

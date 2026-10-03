@@ -20,18 +20,7 @@ public sealed class UiArtImport : AssetPostprocessor
         importer.mipmapEnabled = false;
         importer.filterMode = FilterMode.Bilinear;
         importer.spritePixelsPerUnit = 100f;
-        if (isUi && path.Contains("panel_parchment"))
-            importer.wrapMode = TextureWrapMode.Repeat;
-
-        // 9-slice: 1 px of texture = 1 canvas unit so wood frames stay readable.
-        bool framed = path.Contains("panel_craft") || path.Contains("tab_beige") || path.Contains("ui_tab");
-        if (framed)
-        {
-            importer.spritePixelsPerUnit = 1f;
-            importer.spriteBorder = path.Contains("panel_craft")
-                ? new Vector4(88f, 88f, 88f, 88f)
-                : new Vector4(72f, 72f, 72f, 72f);
-        }
+        // Рамки UI (frame_*) — 9-slice; границы задаются при генерации и живут в .meta.
     }
 }
 #endif

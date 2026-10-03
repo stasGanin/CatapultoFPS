@@ -9,6 +9,24 @@ using UnityEngine.UI;
 /// </summary>
 public class InventoryUI : MonoBehaviour
 {
+    // Размер панелей считается от сетки слотов, а не долями панели: иначе слоты вылезают за рамку.
+    const float BagCell = 56f;
+    const float StorageCell = 52f;
+    const float CellSpacing = 6f;
+    const float PanelPadding = 24f;
+    const float PanelHeader = 48f;
+    const float HintHeight = 22f;
+    const int BagRows = PlayerInventory.BagSize / PlayerInventory.HotbarSize;
+    const int StorageColumns = 6;
+    const int StorageRows = 6;
+
+    static Vector2 GridPanelSize(int columns, int rows, float cell)
+    {
+        float w = columns * cell + (columns - 1) * CellSpacing + PanelPadding * 2f;
+        float h = rows * cell + (rows - 1) * CellSpacing + PanelPadding + PanelHeader;
+        return new Vector2(w, h);
+    }
+
     [Header("Scene / Prefab")]
     [SerializeField] PlayerInventory _inventory;
     [SerializeField] GameObject _bagRoot;
@@ -226,7 +244,7 @@ public class InventoryUI : MonoBehaviour
         }
 
         _storageRoot = CreatePanel(canvas, "StoragePanel", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-            new Vector2(-400f, 10f), new Vector2(360f, 420f));
+            new Vector2(-400f, 10f), GridPanelSize(StorageColumns, StorageRows, StorageCell));
         ApplyPanelStyle(_storageRoot);
 
         _storageTitle = CreateText(_storageRoot.transform, "Chest", 20, TextAnchor.UpperCenter);
@@ -236,22 +254,22 @@ public class InventoryUI : MonoBehaviour
         titleRt.pivot = new Vector2(0.5f, 1f);
         titleRt.sizeDelta = new Vector2(0f, 32f);
         titleRt.anchoredPosition = new Vector2(0f, -10f);
-        _storageTitle.color = InventoryUiTheme.TextDark;
+        _storageTitle.color = InventoryUiTheme.TextPrimary;
 
         var gridHost = new GameObject("StorageGrid", typeof(RectTransform));
         gridHost.transform.SetParent(_storageRoot.transform, false);
         _storageGridRoot = gridHost.transform;
         var gridRt = (RectTransform)gridHost.transform;
-        gridRt.anchorMin = new Vector2(0.06f, 0.08f);
-        gridRt.anchorMax = new Vector2(0.94f, 0.82f);
-        gridRt.offsetMin = Vector2.zero;
-        gridRt.offsetMax = Vector2.zero;
+        gridRt.anchorMin = Vector2.zero;
+        gridRt.anchorMax = Vector2.one;
+        gridRt.offsetMin = new Vector2(PanelPadding, PanelPadding);
+        gridRt.offsetMax = new Vector2(-PanelPadding, -PanelHeader);
 
         var grid = gridHost.AddComponent<GridLayoutGroup>();
-        grid.cellSize = new Vector2(52f, 52f);
-        grid.spacing = new Vector2(6f, 6f);
+        grid.cellSize = new Vector2(StorageCell, StorageCell);
+        grid.spacing = new Vector2(CellSpacing, CellSpacing);
         grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-        grid.constraintCount = 6;
+        grid.constraintCount = StorageColumns;
         grid.childAlignment = TextAnchor.UpperCenter;
 
         _storageRoot.SetActive(false);
@@ -320,7 +338,7 @@ public class InventoryUI : MonoBehaviour
             _playerViews.Add(CreateSlotView(hotbar.transform, true, (i + 1).ToString()));
 
         _bagRoot = CreatePanel(canvasGo.transform, "BagPanel", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-            new Vector2(160f, 20f), new Vector2(420f, 360f));
+            new Vector2(160f, 20f), GridPanelSize(PlayerInventory.HotbarSize, BagRows, BagCell) + new Vector2(0f, HintHeight));
         ApplyPanelStyle(_bagRoot);
 
         var title = CreateText(_bagRoot.transform, "Inventory", 22, TextAnchor.UpperCenter);
@@ -330,30 +348,30 @@ public class InventoryUI : MonoBehaviour
         titleRt.pivot = new Vector2(0.5f, 1f);
         titleRt.sizeDelta = new Vector2(0f, 36f);
         titleRt.anchoredPosition = new Vector2(0f, -8f);
-        title.color = InventoryUiTheme.TextDark;
+        title.color = InventoryUiTheme.TextPrimary;
 
             _hintLabel = CreateText(_bagRoot.transform, "I / Esc  close    ·    C  craft    ·    Shift+click transfer    ·    E  chest", 13, TextAnchor.LowerCenter);
         var hintRt = _hintLabel.rectTransform;
-        hintRt.anchorMin = new Vector2(0.05f, 0f);
-        hintRt.anchorMax = new Vector2(0.95f, 0.08f);
-        hintRt.offsetMin = Vector2.zero;
-        hintRt.offsetMax = Vector2.zero;
-        _hintLabel.color = InventoryUiTheme.TextMuted;
+        hintRt.anchorMin = new Vector2(0f, 0f);
+        hintRt.anchorMax = new Vector2(1f, 0f);
+        hintRt.offsetMin = new Vector2(PanelPadding, PanelPadding * 0.5f);
+        hintRt.offsetMax = new Vector2(-PanelPadding, PanelPadding * 0.5f + HintHeight);
+        _hintLabel.color = InventoryUiTheme.TextSecondary;
 
         var gridHost = new GameObject("BagGrid", typeof(RectTransform));
         gridHost.transform.SetParent(_bagRoot.transform, false);
         _bagGridRoot = gridHost.transform;
         var gridRt = (RectTransform)gridHost.transform;
-        gridRt.anchorMin = new Vector2(0.05f, 0.12f);
-        gridRt.anchorMax = new Vector2(0.95f, 0.86f);
-        gridRt.offsetMin = Vector2.zero;
-        gridRt.offsetMax = Vector2.zero;
+        gridRt.anchorMin = Vector2.zero;
+        gridRt.anchorMax = Vector2.one;
+        gridRt.offsetMin = new Vector2(PanelPadding, PanelPadding + HintHeight);
+        gridRt.offsetMax = new Vector2(-PanelPadding, -PanelHeader);
 
         var grid = gridHost.AddComponent<GridLayoutGroup>();
-        grid.cellSize = new Vector2(56f, 56f);
-        grid.spacing = new Vector2(6f, 6f);
+        grid.cellSize = new Vector2(BagCell, BagCell);
+        grid.spacing = new Vector2(CellSpacing, CellSpacing);
         grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-        grid.constraintCount = 9;
+        grid.constraintCount = PlayerInventory.HotbarSize;
         grid.childAlignment = TextAnchor.UpperCenter;
 
         for (int i = 0; i < PlayerInventory.BagSize; i++)
@@ -388,13 +406,13 @@ public class InventoryUI : MonoBehaviour
         {
             bg.sprite = slotSpr;
             bg.type = Image.Type.Sliced;
-            bg.color = Color.white;
+            bg.color = InventoryUiTheme.SlotNormal;
         }
         else
             bg.color = InventoryUiTheme.SlotNormal;
 
         var outline = go.AddComponent<Outline>();
-        outline.effectColor = InventoryUiTheme.OutlineGold;
+        outline.effectColor = InventoryUiTheme.Accent;
         outline.effectDistance = new Vector2(2f, -2f);
         outline.enabled = false;
 
@@ -418,7 +436,7 @@ public class InventoryUI : MonoBehaviour
         labelRt.anchorMax = new Vector2(0.95f, 0.32f);
         labelRt.offsetMin = Vector2.zero;
         labelRt.offsetMax = Vector2.zero;
-        label.color = InventoryUiTheme.TextDark;
+        label.color = InventoryUiTheme.TextPrimary;
         label.fontStyle = FontStyle.Bold;
         label.raycastTarget = false;
 
@@ -431,7 +449,7 @@ public class InventoryUI : MonoBehaviour
             hintRt.anchorMax = new Vector2(0.4f, 1f);
             hintRt.offsetMin = new Vector2(3f, 0f);
             hintRt.offsetMax = Vector2.zero;
-            hint.color = InventoryUiTheme.TextMuted;
+            hint.color = InventoryUiTheme.TextSecondary;
             hint.raycastTarget = false;
         }
 
@@ -457,7 +475,7 @@ public class InventoryUI : MonoBehaviour
         text.text = content;
         text.fontSize = size;
         text.alignment = anchor;
-        text.color = InventoryUiTheme.TextDark;
+        text.color = InventoryUiTheme.TextPrimary;
         text.horizontalOverflow = HorizontalWrapMode.Wrap;
         text.verticalOverflow = VerticalWrapMode.Truncate;
         return text;
@@ -475,7 +493,7 @@ public class InventoryUI : MonoBehaviour
         {
             img.sprite = panel;
             img.type = Image.Type.Sliced;
-            img.color = tint ?? Color.white;
+            img.color = tint ?? InventoryUiTheme.PanelTint;
         }
         else
             img.color = tint ?? InventoryUiTheme.PanelTint;

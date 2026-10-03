@@ -174,7 +174,7 @@ public sealed class MageUI : MonoBehaviour
         dim.transform.SetParent(_root.transform, false);
         Stretch((RectTransform)dim.transform, 0f, 0f, 0f, 0f);
         var dimImg = dim.AddComponent<Image>();
-        dimImg.color = new Color(0.07f, 0.05f, 0.03f, 0.52f);
+        dimImg.color = InventoryUiTheme.ScreenDim;
         var dimBtn = dim.AddComponent<Button>();
         dimBtn.transition = Selectable.Transition.None;
         dimBtn.onClick.AddListener(() => _station?.Close());
@@ -206,7 +206,7 @@ public sealed class MageUI : MonoBehaviour
         barBg.transform.SetParent(card.transform, false);
         PinTop((RectTransform)barBg.transform, 20f, 52f, 20f, 22f);
         var bgImg = barBg.AddComponent<Image>();
-        bgImg.color = new Color(0.35f, 0.28f, 0.2f, 0.85f);
+        bgImg.color = InventoryUiTheme.BarTrack;
 
         var fillGo = new GameObject("Fill", typeof(RectTransform));
         fillGo.transform.SetParent(barBg.transform, false);
@@ -221,7 +221,7 @@ public sealed class MageUI : MonoBehaviour
             "Chronum is the mage's fuel. Feed from your bag — never mined, never in settlement chests.",
             14, TextAnchor.UpperLeft);
         PinTop(feedHint.rectTransform, 20f, 88f, 20f, 56f);
-        feedHint.color = InventoryUiTheme.TextMuted;
+        feedHint.color = InventoryUiTheme.TextSecondary;
 
         _feedButton = CreateGoldButton(card.transform, "Feed    [Enter]", new Vector2(0f, 44f), TryFeed);
         var feedRt = (RectTransform)_feedButton.transform;
@@ -251,7 +251,7 @@ public sealed class MageUI : MonoBehaviour
         var hint = CreateText(panel.transform, "E / Esc  close    ·    Enter  feed    ·    U  upgrade",
             13, TextAnchor.MiddleCenter);
         PinBottom(hint.rectTransform, 100f, 56f, 100f, 24f);
-        hint.color = InventoryUiTheme.TextMuted;
+        hint.color = InventoryUiTheme.TextSecondary;
 
         _root.SetActive(false);
     }
@@ -267,18 +267,13 @@ public sealed class MageUI : MonoBehaviour
         if (spr != null)
         {
             img.sprite = spr;
-            img.color = Color.white;
+            img.type = Image.Type.Sliced;
         }
-        else
-            img.color = InventoryUiTheme.ButtonNormal;
+
+        img.color = InventoryUiTheme.ButtonNormal;
         var btn = go.AddComponent<Button>();
         btn.targetGraphic = img;
-        var colors = btn.colors;
-        colors.normalColor = Color.white;
-        colors.highlightedColor = new Color(1f, 0.95f, 0.82f);
-        colors.pressedColor = new Color(0.82f, 0.74f, 0.58f);
-        colors.disabledColor = new Color(0.55f, 0.52f, 0.48f, 0.7f);
-        btn.colors = colors;
+        InventoryUiTheme.ApplyInteractionTint(btn);
         btn.navigation = new Navigation { mode = Navigation.Mode.None };
         btn.onClick.AddListener(onClick);
         var text = CreateText(go.transform, label, 16, TextAnchor.MiddleCenter);
@@ -297,7 +292,7 @@ public sealed class MageUI : MonoBehaviour
         text.text = content;
         text.fontSize = size;
         text.alignment = anchor;
-        text.color = InventoryUiTheme.TextDark;
+        text.color = InventoryUiTheme.TextPrimary;
         text.horizontalOverflow = HorizontalWrapMode.Wrap;
         text.verticalOverflow = VerticalWrapMode.Truncate;
         return text;
@@ -315,12 +310,9 @@ public sealed class MageUI : MonoBehaviour
         {
             img.sprite = panel;
             img.type = Image.Type.Sliced;
-            img.color = Color.white;
-            if (panel.pixelsPerUnit > 1.01f)
-                img.pixelsPerUnitMultiplier = panel.pixelsPerUnit;
         }
-        else
-            img.color = InventoryUiTheme.PanelTint;
+
+        img.color = InventoryUiTheme.PanelTint;
         return go;
     }
 

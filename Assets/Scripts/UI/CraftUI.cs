@@ -278,7 +278,7 @@ public sealed class CraftUI : MonoBehaviour
             bool on = _category == cats[i];
             var img = _tabButtons[i].targetGraphic as Image;
             if (img != null)
-                img.color = on ? Color.white : new Color(0.82f, 0.76f, 0.64f, 1f);
+                img.color = on ? InventoryUiTheme.TabActive : InventoryUiTheme.ButtonNormal;
             var label = _tabButtons[i].GetComponentInChildren<Text>();
             if (label != null)
                 label.fontStyle = on ? FontStyle.Bold : FontStyle.Normal;
@@ -294,9 +294,9 @@ public sealed class CraftUI : MonoBehaviour
             int max = CraftingService.MaxCraftable(_inventory, row.Recipe);
             row.Background.color = selected ? InventoryUiTheme.SlotSelected : InventoryUiTheme.SlotNormal;
             row.Name.text = row.Recipe.DisplayName;
-            row.Name.color = InventoryUiTheme.TextDark;
+            row.Name.color = InventoryUiTheme.TextPrimary;
             row.State.text = max > 0 ? "Ready" : "Missing";
-            row.State.color = max > 0 ? InventoryUiTheme.ReadyGreen : InventoryUiTheme.TextMuted;
+            row.State.color = max > 0 ? InventoryUiTheme.ReadyGreen : InventoryUiTheme.TextSecondary;
             ApplyItemIcon(row.Icon, row.Recipe.Output);
         }
     }
@@ -405,7 +405,7 @@ public sealed class CraftUI : MonoBehaviour
         dim.transform.SetParent(_root.transform, false);
         Stretch((RectTransform)dim.transform, 0f, 0f, 0f, 0f);
         var dimImg = dim.AddComponent<Image>();
-        dimImg.color = new Color(0.07f, 0.05f, 0.03f, 0.52f);
+        dimImg.color = InventoryUiTheme.ScreenDim;
         var dimBtn = dim.AddComponent<Button>();
         dimBtn.transition = Selectable.Transition.None;
         dimBtn.navigation = new Navigation { mode = Navigation.Mode.None };
@@ -432,10 +432,12 @@ public sealed class CraftUI : MonoBehaviour
         BuildDetail(panel.transform);
 
         _hint = CreateText(panel.transform,
-            "C / Esc  close    ·    Tab  category    ·    ↑ ↓  recipe    ·    + / −  quantity    ·    Enter  craft",
+            "Tab category  ·  ↑↓ recipe  ·  +/− qty  ·  Enter craft  ·  Esc close",
             13, TextAnchor.MiddleCenter);
-        PinBottom(_hint.rectTransform, 108f, 60f, 108f, 26f);
-        _hint.color = InventoryUiTheme.TextMuted;
+        // В шапке справа от заголовка: снизу внутри рамки места нет — там кончается список рецептов.
+        PinTop(_hint.rectTransform, 280f, 100f, 156f, 26f);
+        _hint.alignment = TextAnchor.MiddleRight;
+        _hint.color = InventoryUiTheme.TextSecondary;
 
         _root.SetActive(false);
         RebuildRows();
@@ -535,7 +537,7 @@ public sealed class CraftUI : MonoBehaviour
         _outputIcon = iconGo.AddComponent<Image>();
         _outputIcon.color = InventoryUiTheme.SlotNormal;
         var slotBg = iconGo.AddComponent<Outline>();
-        slotBg.effectColor = InventoryUiTheme.OutlineGold;
+        slotBg.effectColor = InventoryUiTheme.Accent;
         slotBg.effectDistance = new Vector2(1.5f, -1.5f);
 
         _title = CreateText(detail.transform, "Select a recipe", 22, TextAnchor.UpperLeft);
@@ -544,7 +546,7 @@ public sealed class CraftUI : MonoBehaviour
 
         _outputLabel = CreateText(detail.transform, string.Empty, 14, TextAnchor.UpperLeft);
         PinTop(_outputLabel.rectTransform, 108f, 48f, 20f, 22f);
-        _outputLabel.color = InventoryUiTheme.TextMuted;
+        _outputLabel.color = InventoryUiTheme.TextSecondary;
 
         _desc = CreateText(detail.transform, string.Empty, 15, TextAnchor.UpperLeft);
         PinTop(_desc.rectTransform, 20f, 100f, 20f, 72f);
@@ -554,10 +556,10 @@ public sealed class CraftUI : MonoBehaviour
         need.fontStyle = FontStyle.Bold;
 
         _ingredients = CreateText(detail.transform, string.Empty, 16, TextAnchor.UpperLeft);
-        PinTop(_ingredients.rectTransform, 20f, 204f, 20f, 100f);
+        PinTop(_ingredients.rectTransform, 20f, 204f, 20f, 60f);
 
         _status = CreateText(detail.transform, string.Empty, 14, TextAnchor.UpperLeft);
-        PinTop(_status.rectTransform, 20f, 308f, 20f, 28f);
+        PinTop(_status.rectTransform, 20f, 268f, 20f, 28f);
 
         BuildQty(detail.transform);
 
@@ -566,7 +568,7 @@ public sealed class CraftUI : MonoBehaviour
         craftRt.anchorMin = new Vector2(0.08f, 0f);
         craftRt.anchorMax = new Vector2(0.92f, 0f);
         craftRt.pivot = new Vector2(0.5f, 0f);
-        craftRt.anchoredPosition = new Vector2(0f, 96f);
+        craftRt.anchoredPosition = new Vector2(0f, 14f);
         craftRt.sizeDelta = new Vector2(0f, 48f);
         _craftLabel = _craftButton.GetComponentInChildren<Text>();
         if (_craftLabel != null)
@@ -584,7 +586,7 @@ public sealed class CraftUI : MonoBehaviour
         rt.anchorMin = new Vector2(0.08f, 0f);
         rt.anchorMax = new Vector2(0.92f, 0f);
         rt.pivot = new Vector2(0.5f, 0f);
-        rt.anchoredPosition = new Vector2(0f, 156f);
+        rt.anchoredPosition = new Vector2(0f, 70f);
         rt.sizeDelta = new Vector2(0f, 40f);
         var layout = row.AddComponent<HorizontalLayoutGroup>();
         layout.spacing = 8f;
@@ -632,7 +634,7 @@ public sealed class CraftUI : MonoBehaviour
         bg.color = InventoryUiTheme.SlotNormal;
         var btn = go.AddComponent<Button>();
         btn.targetGraphic = bg;
-        ApplyButtonColors(btn);
+        InventoryUiTheme.ApplyInteractionTint(btn);
         var captured = recipe;
         btn.onClick.AddListener(() => Select(captured));
 
@@ -677,10 +679,11 @@ public sealed class CraftUI : MonoBehaviour
 
         var img = go.AddComponent<Image>();
         ApplySprite(img, sprite != null ? sprite : InventoryUiTheme.ButtonSprite, sliced: true);
+        img.color = InventoryUiTheme.ButtonNormal;
         var btn = go.AddComponent<Button>();
         btn.targetGraphic = img;
         btn.transition = Selectable.Transition.ColorTint;
-        ApplyButtonColors(btn);
+        InventoryUiTheme.ApplyInteractionTint(btn);
         btn.navigation = new Navigation { mode = Navigation.Mode.None };
         if (onClick != null)
             btn.onClick.AddListener(onClick);
@@ -692,19 +695,6 @@ public sealed class CraftUI : MonoBehaviour
         return btn;
     }
 
-    static void ApplyButtonColors(Button btn)
-    {
-        var colors = btn.colors;
-        colors.normalColor = Color.white;
-        colors.highlightedColor = new Color(1f, 0.95f, 0.82f, 1f);
-        colors.pressedColor = new Color(0.82f, 0.74f, 0.58f, 1f);
-        colors.selectedColor = Color.white;
-        colors.disabledColor = new Color(0.55f, 0.52f, 0.48f, 0.7f);
-        colors.colorMultiplier = 1f;
-        colors.fadeDuration = 0.08f;
-        btn.colors = colors;
-    }
-
     Text CreateText(Transform parent, string content, int size, TextAnchor anchor)
     {
         var go = new GameObject("Text", typeof(RectTransform));
@@ -714,7 +704,7 @@ public sealed class CraftUI : MonoBehaviour
         text.text = content;
         text.fontSize = size;
         text.alignment = anchor;
-        text.color = InventoryUiTheme.TextDark;
+        text.color = InventoryUiTheme.TextPrimary;
         text.horizontalOverflow = HorizontalWrapMode.Wrap;
         text.verticalOverflow = VerticalWrapMode.Truncate;
         return text;
@@ -730,8 +720,7 @@ public sealed class CraftUI : MonoBehaviour
         Sprite panel = sprite != null ? sprite : InventoryUiTheme.PanelSprite;
         if (panel != null)
             ApplySprite(img, panel, sliced: true);
-        else
-            img.color = InventoryUiTheme.PanelTint;
+        img.color = InventoryUiTheme.PanelTint;
         return go;
     }
 
@@ -741,11 +730,7 @@ public sealed class CraftUI : MonoBehaviour
             return;
         img.sprite = sprite;
         img.type = sliced ? Image.Type.Sliced : Image.Type.Simple;
-        img.color = Color.white;
         img.preserveAspect = false;
-        // PPU 100 would shrink 9-slice borders to ~1px; keep 1 texture pixel = 1 canvas unit.
-        if (sliced && sprite.pixelsPerUnit > 1.01f)
-            img.pixelsPerUnitMultiplier = sprite.pixelsPerUnit;
     }
 
     static void Stretch(RectTransform rt, float left, float bottom, float right, float top)

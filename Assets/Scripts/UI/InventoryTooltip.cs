@@ -126,12 +126,12 @@ public sealed class InventoryTooltip : MonoBehaviour
         Image panel = UiFactory.CreatePanel(_canvas.transform, "Tooltip", new Vector2(0f, 0f), new Vector2(0f, 1f), Vector2.zero, new Vector2(Width, 100f));
         _panel = panel.rectTransform;
         var outline = panel.gameObject.AddComponent<Outline>();
-        outline.effectColor = InventoryUiTheme.OutlineGold;
+        outline.effectColor = InventoryUiTheme.Accent;
         outline.effectDistance = new Vector2(1.5f, -1.5f);
 
-        _title = Line("Title", 20, InventoryUiTheme.TextDark, FontStyle.Bold);
-        _kind = Line("Kind", 14, InventoryUiTheme.TextMuted, FontStyle.Italic);
-        _description = Line("Description", 16, InventoryUiTheme.TextDark, FontStyle.Normal);
+        _title = Line("Title", 20, InventoryUiTheme.TextPrimary, FontStyle.Bold);
+        _kind = Line("Kind", 14, InventoryUiTheme.TextSecondary, FontStyle.Italic);
+        _description = Line("Description", 16, InventoryUiTheme.TextPrimary, FontStyle.Normal);
         _description.horizontalOverflow = HorizontalWrapMode.Wrap;
         _panel.gameObject.SetActive(false);
     }

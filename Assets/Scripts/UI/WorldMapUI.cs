@@ -305,7 +305,7 @@ public sealed class WorldMapUI : MonoBehaviour
         lrt.pivot = new Vector2(0.5f, 1f);
         lrt.anchoredPosition = new Vector2(0f, -4f);
         lrt.sizeDelta = new Vector2(140f, 32f);
-        label.color = new Color(0.93f, 0.95f, 0.98f, 1f);
+        label.color = InventoryUiTheme.TextPrimary;
     }
 
     static Color NodeColor(MapNodeKind kind)
@@ -351,7 +351,7 @@ public sealed class WorldMapUI : MonoBehaviour
         dim.transform.SetParent(_root.transform, false);
         Stretch((RectTransform)dim.transform);
         var dimImg = dim.AddComponent<Image>();
-        dimImg.color = new Color(0.02f, 0.03f, 0.05f, 0.78f);
+        dimImg.color = InventoryUiTheme.ScreenDim;
         var dimBtn = dim.AddComponent<Button>();
         dimBtn.transition = Selectable.Transition.None;
         dimBtn.navigation = new Navigation { mode = Navigation.Mode.None };
@@ -363,7 +363,7 @@ public sealed class WorldMapUI : MonoBehaviour
         panelRt.anchorMin = panelRt.anchorMax = new Vector2(0.5f, 0.5f);
         panelRt.sizeDelta = new Vector2(980f, 720f);
         var panelImg = panel.AddComponent<Image>();
-        panelImg.color = new Color(0.10f, 0.13f, 0.18f, 0.98f);
+        InventoryUiTheme.StylePanel(panelImg);
 
         var title = CreateText(panel.transform, "World Map", 26, TextAnchor.MiddleLeft);
         PinTop(title.rectTransform, 36f, 18f, 120f, 36f);
@@ -385,7 +385,7 @@ public sealed class WorldMapUI : MonoBehaviour
         _plot.offsetMin = Vector2.zero;
         _plot.offsetMax = Vector2.zero;
         var plotImg = plotGo.AddComponent<Image>();
-        plotImg.color = new Color(0.16f, 0.20f, 0.26f, 0.96f);
+        plotImg.color = InventoryUiTheme.BarTrack;
 
         var markGo = new GameObject("Player", typeof(RectTransform));
         markGo.transform.SetParent(_plot, false);
@@ -397,11 +397,11 @@ public sealed class WorldMapUI : MonoBehaviour
 
         _hint = CreateText(panel.transform, "M / Esc  close    ·    blue marker is you    ·    green home · red enemy pads", 14, TextAnchor.MiddleCenter);
         PinBottom(_hint.rectTransform, 24f, 16f, 24f, 28f);
-        _hint.color = new Color(0.72f, 0.76f, 0.82f, 1f);
+        _hint.color = InventoryUiTheme.TextSecondary;
 
         var legend = CreateText(panel.transform, "Green home   ·   Red enemy   ·   Gold town   ·   Dark boss", 13, TextAnchor.MiddleRight);
         PinTop(legend.rectTransform, 220f, 22f, 80f, 28f);
-        legend.color = new Color(0.72f, 0.76f, 0.82f, 1f);
+        legend.color = InventoryUiTheme.TextSecondary;
     }
 
     Button CreateButton(Transform parent, string label, UnityEngine.Events.UnityAction onClick)
@@ -409,9 +409,9 @@ public sealed class WorldMapUI : MonoBehaviour
         var go = new GameObject(label, typeof(RectTransform));
         go.transform.SetParent(parent, false);
         var img = go.AddComponent<Image>();
-        img.color = new Color(0.22f, 0.48f, 0.82f, 1f);
         var btn = go.AddComponent<Button>();
         btn.targetGraphic = img;
+        InventoryUiTheme.StyleButton(img, btn);
         btn.onClick.AddListener(onClick);
         var text = CreateText(go.transform, label, 16, TextAnchor.MiddleCenter);
         Stretch(text.rectTransform);
@@ -429,7 +429,7 @@ public sealed class WorldMapUI : MonoBehaviour
         text.font = _font;
         text.fontSize = size;
         text.alignment = align;
-        text.color = new Color(0.93f, 0.95f, 0.98f, 1f);
+        text.color = InventoryUiTheme.TextPrimary;
         text.text = value;
         text.raycastTarget = false;
         return text;

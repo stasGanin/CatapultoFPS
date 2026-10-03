@@ -152,9 +152,9 @@ public sealed class ResearchUI : MonoBehaviour
         button.onClick.AddListener(() => TryResearch(node));
 
         Text title = Label(rt, "Title", 18, FontStyle.Bold, new Vector2(10f, -8f), node.DisplayName);
-        title.color = InventoryUiTheme.TextDark;
-        Label(rt, "Unlocks", 13, FontStyle.Italic, new Vector2(10f, -32f), "Unlocks: " + RecipeNames(node)).color = InventoryUiTheme.TextMuted;
-        Label(rt, "Cost", 14, FontStyle.Normal, new Vector2(10f, -54f), "Cost: " + CostText(node)).color = InventoryUiTheme.TextDark;
+        title.color = InventoryUiTheme.TextPrimary;
+        Label(rt, "Unlocks", 13, FontStyle.Italic, new Vector2(10f, -32f), "Unlocks: " + RecipeNames(node)).color = InventoryUiTheme.TextSecondary;
+        Label(rt, "Cost", 14, FontStyle.Normal, new Vector2(10f, -54f), "Cost: " + CostText(node)).color = InventoryUiTheme.TextPrimary;
         Text status = Label(rt, "Status", 14, FontStyle.Bold, new Vector2(10f, -100f), string.Empty);
 
         return new NodeView { Node = node, Background = bg, Status = status, Button = button };
@@ -251,10 +251,10 @@ public sealed class ResearchUI : MonoBehaviour
 
         Image panel = UiFactory.CreatePanel(_root.transform, "ResearchPanel", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1000f, 620f));
         panel.raycastTarget = true;
-        Text title = UiFactory.CreateText(UiFactory.CreateRect(panel.transform, "Title", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -24f), new Vector2(900f, 40f)), "Text", 28, InventoryUiTheme.TextDark, TextAnchor.MiddleCenter);
+        Text title = UiFactory.CreateText(UiFactory.CreateRect(panel.transform, "Title", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -24f), new Vector2(900f, 40f)), "Text", 28, InventoryUiTheme.TextPrimary, TextAnchor.MiddleCenter);
         title.text = "Research";
         title.fontStyle = FontStyle.Bold;
-        Text hint = UiFactory.CreateText(UiFactory.CreateRect(panel.transform, "Hint", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 18f), new Vector2(900f, 24f)), "Text", 15, InventoryUiTheme.TextMuted, TextAnchor.MiddleCenter);
+        Text hint = UiFactory.CreateText(UiFactory.CreateRect(panel.transform, "Hint", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 18f), new Vector2(900f, 24f)), "Text", 15, InventoryUiTheme.TextSecondary, TextAnchor.MiddleCenter);
         hint.text = "Click a node to research   ·   E / Esc close";
 
         _nodesRoot = UiFactory.CreateRect(panel.transform, "Nodes", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(40f, -80f), new Vector2(920f, 480f));

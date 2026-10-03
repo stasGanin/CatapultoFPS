@@ -56,7 +56,7 @@ public static class UiFactory
         }
         else
         {
-            image.color = new Color(0.94f, 0.9f, 0.82f, 0.9f);
+            image.color = InventoryUiTheme.PanelTint;
         }
 
         return image;
@@ -94,7 +94,7 @@ public static class UiFactory
     {
         RectTransform back = CreateRect(parent, name, new Vector2(0f, 1f), new Vector2(0f, 1f), position, size);
         var bg = back.gameObject.AddComponent<Image>();
-        bg.color = new Color(0.2f, 0.16f, 0.1f, 0.55f);
+        bg.color = InventoryUiTheme.BarTrack;
         bg.raycastTarget = false;
 
         Image bar = CreateFill(back, "Fill", fill);

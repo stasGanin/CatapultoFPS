@@ -88,7 +88,7 @@ public sealed class CastleModuleMenuUI : MonoBehaviour
         rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
         rt.sizeDelta = new Vector2(600f, 400f);
         var bg = _root.AddComponent<Image>();
-        bg.color = new Color(0.08f, 0.09f, 0.11f, 0.96f);
+        InventoryUiTheme.StylePanel(bg);
 
         var title = CreateText(_root.transform, "Castle", 26, TextAnchor.UpperCenter);
         var titleRt = title.rectTransform;
@@ -106,7 +106,7 @@ public sealed class CastleModuleMenuUI : MonoBehaviour
         stoneRt.sizeDelta = new Vector2(140f, 28f);
 
         var hint = CreateText(_root.transform, "LMB select · R rotate station · RMB / Esc close", 14, TextAnchor.LowerCenter);
-        hint.color = new Color(0.7f, 0.7f, 0.7f);
+        hint.color = InventoryUiTheme.TextSecondary;
         var hintRt = hint.rectTransform;
         hintRt.anchorMin = new Vector2(0f, 0f);
         hintRt.anchorMax = new Vector2(1f, 0f);
@@ -142,7 +142,6 @@ public sealed class CastleModuleMenuUI : MonoBehaviour
         var go = new GameObject(def.Id, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
         go.transform.SetParent(parent, false);
         var img = go.GetComponent<Image>();
-        img.color = def.IconColor;
         img.raycastTarget = true;
 
         var cost = CreateText(go.transform, def.StoneCost.ToString(), 14, TextAnchor.LowerRight);
@@ -162,6 +161,7 @@ public sealed class CastleModuleMenuUI : MonoBehaviour
 
         var btn = go.GetComponent<Button>();
         btn.targetGraphic = img;
+        InventoryUiTheme.StyleTile(img, btn, def.IconColor);
         CastleModuleDefinition captured = def;
         btn.onClick.AddListener(() =>
         {
@@ -196,7 +196,6 @@ public sealed class CastleModuleMenuUI : MonoBehaviour
         var go = new GameObject(def.Id, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
         go.transform.SetParent(parent, false);
         var img = go.GetComponent<Image>();
-        img.color = def.IconColor;
 
         var name = CreateText(go.transform, def.DisplayName, 13, TextAnchor.UpperCenter);
         var nrt = name.rectTransform;
@@ -215,6 +214,7 @@ public sealed class CastleModuleMenuUI : MonoBehaviour
 
         var btn = go.GetComponent<Button>();
         btn.targetGraphic = img;
+        InventoryUiTheme.StyleTile(img, btn, def.IconColor);
         btn.onClick.AddListener(() =>
         {
             if (_controller == null)
@@ -228,7 +228,6 @@ public sealed class CastleModuleMenuUI : MonoBehaviour
         var go = new GameObject("demolish", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
         go.transform.SetParent(parent, false);
         var img = go.GetComponent<Image>();
-        img.color = new Color(0.62f, 0.2f, 0.16f, 1f);
 
         var name = CreateText(go.transform, "Demolish", 13, TextAnchor.MiddleCenter);
         var nrt = name.rectTransform;
@@ -238,6 +237,7 @@ public sealed class CastleModuleMenuUI : MonoBehaviour
 
         var btn = go.GetComponent<Button>();
         btn.targetGraphic = img;
+        InventoryUiTheme.StyleTile(img, btn, InventoryUiTheme.MissingRed);
         btn.onClick.AddListener(() =>
         {
             if (_controller == null)
