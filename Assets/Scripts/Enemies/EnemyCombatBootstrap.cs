@@ -72,6 +72,10 @@ public sealed class EnemyCombatBootstrap : MonoBehaviour
         if (inventory != null && appleItem != null)
             inventory.SetHotbarItem(4, appleItem, 10);
 
+        var xpFruitItem = Resources.Load<ItemDefinition>("Items/XpFruitCommonItem");
+        if (inventory != null && xpFruitItem != null)
+            inventory.SetHotbarItem(5, xpFruitItem, 10);
+
         var equipment = GetComponent<EquipmentController>();
         equipment?.BindCrossbow(crossbow);
         equipment?.BindStaff(staff);
