@@ -21,6 +21,6 @@ MonoBehaviour:
   _explosionForce: 0
   _projectileLifetime: 3
   _aimRange: 80
-  _projectileVisual: {fileID: 1238843893459588, guid: df1a1922af2b37e4f9ade4203d8566bd, type: 2}
-  _impactVisual: {fileID: 1879272669879180, guid: 9aef5c2b44fcd9a45b7789e47f954670, type: 2}
+  _projectileVisual: {fileID: 1796749963149706, guid: 39857ee6d99944b4e807aa60e2c121b8, type: 2}
+  _impactVisual: {fileID: 1879272669879180, guid: 6ab6c7ce781badd4fba2721048335296, type: 2}
   _muzzleFlash: {fileID: 1000012903210382, guid: e165b34d6402b6449bce6c32e18c8419, type: 2}
