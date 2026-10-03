@@ -38,3 +38,7 @@ ui_gen_log.txt
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Unity MCP screenshots
+/Assets/Screenshots/
+/Assets/Screenshots.meta
