@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Detached debris piece mined with the pickaxe; weapons can smash it too (without the pickaxe's fallback loot).
+/// Detached debris piece mined with the pickaxe; weapons can smash it too (base stone, no pickaxe bonus).
 /// Prefer setting Loot Item / Count on the prefab; pickaxe stone is only a fallback.
 /// </summary>
 public class MineableDebris : MonoBehaviour, IDamageable
@@ -16,9 +16,21 @@ public class MineableDebris : MonoBehaviour, IDamageable
 
     const float WeaponLootPickupRadius = 2f;
 
+    static ItemDefinition _defaultStone;
+
     int _hp;
     // Destroy откладывается до конца кадра: без флага два удара в один кадр дадут двойной дроп.
     bool _isSpent;
+
+    static ItemDefinition DefaultStone
+    {
+        get
+        {
+            if (_defaultStone == null)
+                _defaultStone = Resources.Load<ItemDefinition>("Items/StoneItem");
+            return _defaultStone;
+        }
+    }
 
     public ItemDefinition LootItem => _lootItem;
     public int LootCount => Mathf.Max(1, _lootCount);
@@ -85,8 +97,11 @@ public class MineableDebris : MonoBehaviour, IDamageable
 
         _isSpent = true;
 
-        if (_lootItem != null)
-            WorldLootPickup.Spawn(_lootItem, LootCount, GetDebrisCenter(), WeaponLootPickupRadius);
+        // Без своего лута оружие даёт обычный камень (1 шт., без бонуса кирки).
+        ItemDefinition drop = _lootItem != null ? _lootItem : DefaultStone;
+        int count = _lootItem != null ? LootCount : 1;
+        if (drop != null)
+            WorldLootPickup.Spawn(drop, count, GetDebrisCenter(), WeaponLootPickupRadius);
         Destroy(gameObject);
     }
 
