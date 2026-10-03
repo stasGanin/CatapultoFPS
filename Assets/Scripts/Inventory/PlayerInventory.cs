@@ -45,6 +45,7 @@ public class PlayerInventory : MonoBehaviour, IInventorySlots
         || ResearchUI.IsOpen
         || _menuOpen
         || IsCraftOpen
+        || IsTalentsOpen
         || IsMageOpen
         || IsFurniturePlacing
         || IsMapOpen
@@ -55,6 +56,7 @@ public class PlayerInventory : MonoBehaviour, IInventorySlots
         ResearchUI.IsOpen
         || _menuOpen
         || IsCraftOpen
+        || IsTalentsOpen
         || IsMageOpen
         || IsMapOpen
         || IsSettingsOpen
@@ -62,6 +64,17 @@ public class PlayerInventory : MonoBehaviour, IInventorySlots
         || (CastleBuild != null && CastleBuild.BlocksLook);
 
     public bool IsMapOpen => WorldMapUI.IsOpen;
+    // TalentsUI добавляется бутстрапом позже Awake инвентаря — ищем лениво.
+    TalentsUI _talentsUi;
+    public bool IsTalentsOpen
+    {
+        get
+        {
+            if (_talentsUi == null)
+                _talentsUi = GetComponent<TalentsUI>();
+            return _talentsUi != null && _talentsUi.IsOpen;
+        }
+    }
     // PlayerHealth добавляется бутстрапом позже Awake инвентаря — ищем лениво.
     PlayerHealth _health;
     bool IsDead
