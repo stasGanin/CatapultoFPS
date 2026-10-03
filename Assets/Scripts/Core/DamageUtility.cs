@@ -57,7 +57,8 @@ public static class DamageUtility
             DamageNumbers.Spawn(labelAt, amount);
 
         // Хитмаркер только по живым целям: попадание в стену не должно ощущаться как «попал».
-        if (fromPlayer && !(damageable is CarcassWallBreakable) && !(damageable is CastleModuleBreakable))
+        if (fromPlayer && !(damageable is CarcassWallBreakable) && !(damageable is CastleModuleBreakable)
+            && !(damageable is MineableDebris))
             CombatFeedback.RaiseHitConfirmed(point);
     }
 

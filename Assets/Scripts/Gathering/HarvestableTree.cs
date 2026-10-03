@@ -23,7 +23,7 @@ public sealed class HarvestableTree : MonoBehaviour
         _hp = Mathf.Max(1, _maxHp);
     }
 
-    public bool TryChop(int damage, Vector3 hitPoint, Vector3 hitNormal)
+    public bool TryChop(int damage, Vector3 hitPoint, Vector3 hitNormal, float lootMultiplier = 1f)
     {
         if (_cut || damage <= 0)
             return false;
@@ -36,7 +36,7 @@ public sealed class HarvestableTree : MonoBehaviour
         _cut = true;
         HideVisual();
         SpawnStump();
-        SpawnWood();
+        SpawnWood(lootMultiplier);
         Destroy(gameObject);
         return true;
     }
@@ -83,12 +83,12 @@ public sealed class HarvestableTree : MonoBehaviour
         ApplyColor(stump, new Color(0.32f, 0.2f, 0.12f));
     }
 
-    void SpawnWood()
+    void SpawnWood(float lootMultiplier)
     {
         var wood = Resources.Load<ItemDefinition>("Items/WoodItem");
         if (wood == null)
             return;
-        int count = Random.Range(2, 5);
+        int count = Mathf.Max(1, Mathf.RoundToInt(Random.Range(2, 5) * lootMultiplier));
         WorldLootPickup.Spawn(wood, count, transform.position + Vector3.up * 0.4f, 1.8f);
     }
 

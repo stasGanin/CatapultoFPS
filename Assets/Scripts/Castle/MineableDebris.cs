@@ -1,10 +1,10 @@
 using UnityEngine;
 
 /// <summary>
-/// Detached debris piece mined with the pickaxe.
+/// Detached debris piece mined with the pickaxe; weapons can smash it too (without the pickaxe's fallback loot).
 /// Prefer setting Loot Item / Count on the prefab; pickaxe stone is only a fallback.
 /// </summary>
-public class MineableDebris : MonoBehaviour
+public class MineableDebris : MonoBehaviour, IDamageable
 {
     [Header("Mining")]
     [SerializeField] int _maxHp = 10;
@@ -13,6 +13,8 @@ public class MineableDebris : MonoBehaviour
     [Tooltip("If set, pickaxe drops this instead of the tool default stone.")]
     [SerializeField] ItemDefinition _lootItem;
     [SerializeField] int _lootCount = 1;
+
+    const float WeaponLootPickupRadius = 2f;
 
     int _hp;
 
@@ -38,6 +40,7 @@ public class MineableDebris : MonoBehaviour
 
     /// <summary>
     /// Pickaxe hit. Uses prefab loot when assigned; otherwise fallbackItem/fallbackCount.
+    /// lootMultiplier — бонус кирки к количеству дропа (1 = без бонуса).
     /// </summary>
     public bool TryMine(
         int damage,
@@ -45,7 +48,8 @@ public class MineableDebris : MonoBehaviour
         int fallbackCount,
         float lootPickupRadius,
         Vector3 hitPoint,
-        Vector3 hitNormal)
+        Vector3 hitNormal,
+        float lootMultiplier = 1f)
     {
         if (damage <= 0 || !isActiveAndEnabled)
             return false;
@@ -56,12 +60,28 @@ public class MineableDebris : MonoBehaviour
             return true;
 
         ItemDefinition drop = _lootItem != null ? _lootItem : fallbackItem;
-        int count = _lootItem != null ? LootCount : Mathf.Max(1, fallbackCount);
+        int baseCount = _lootItem != null ? LootCount : Mathf.Max(1, fallbackCount);
+        int count = Mathf.Max(1, Mathf.RoundToInt(baseCount * lootMultiplier));
         if (drop != null)
             WorldLootPickup.Spawn(drop, count, GetDebrisCenter(), lootPickupRadius);
 
         Destroy(gameObject);
         return true;
+    }
+
+    /// <summary>Урон оружием: кусок просто разбивается, камень «по умолчанию» даёт только кирка.</summary>
+    public void ApplyDamage(float amount, in DamageInfo info)
+    {
+        if (amount <= 0f || !isActiveAndEnabled)
+            return;
+
+        _hp -= Mathf.CeilToInt(amount);
+        if (_hp > 0)
+            return;
+
+        if (_lootItem != null)
+            WorldLootPickup.Spawn(_lootItem, LootCount, GetDebrisCenter(), WeaponLootPickupRadius);
+        Destroy(gameObject);
     }
 
     Vector3 GetDebrisCenter()

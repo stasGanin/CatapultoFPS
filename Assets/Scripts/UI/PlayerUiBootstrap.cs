@@ -49,6 +49,8 @@ public sealed class PlayerUiBootstrap : MonoBehaviour
             gameObject.AddComponent<WorldMapUI>();
         if (GetComponent<SettingsMenuUI>() == null)
             gameObject.AddComponent<SettingsMenuUI>();
+        if (GetComponent<AltFireHud>() == null)
+            gameObject.AddComponent<AltFireHud>();
         if (GetComponent<DamageFeedbackUI>() == null)
             gameObject.AddComponent<DamageFeedbackUI>();
         if (GetComponent<CombatHud>() == null)

@@ -17,12 +17,27 @@ public class PickaxeTool : MonoBehaviour
     [SerializeField] float _lootPickupRadius = 2f;
     [SerializeField] int _damage = 5;
     [SerializeField] int _stonePerDebris = 1;
+    [Tooltip("Бонус кирки к дропу с мусора и деревьев, % (100 = обычно).")]
+    [SerializeField, Min(1)] int _lootPercent = 200;
+
+    [Header("Heavy swing (RMB)")]
+    [Tooltip("Урон по площади; примерно в 1.5 раза больше ядра пушки.")]
+    [SerializeField, Min(0f)] float _heavyDamage = 440f;
+    [SerializeField, Min(0.5f)] float _heavyRadius = 3f;
+    [SerializeField, Min(0.5f)] float _heavyCooldown = 6f;
 
     Quaternion _restLocalRotation;
     float _swingPhase;
     float _nextHitTime;
     CharacterController _selfController;
     bool _equipped;
+    float _heavyReadyTime;
+
+    public bool IsEquipped => _equipped;
+    /// <summary>Заряд сильного удара 0..1; 1 = можно бить.</summary>
+    public float HeavySwingCharge => Mathf.Clamp01(1f - (_heavyReadyTime - Time.time) / _heavyCooldown);
+
+    float LootMultiplier => _lootPercent / 100f;
 
     public GameObject ViewModelObject => _viewModel != null ? _viewModel.gameObject : null;
 
@@ -80,6 +95,9 @@ public class PickaxeTool : MonoBehaviour
             }
         }
 
+        if (_input.SecondaryPressed)
+            TryHeavySwing();
+
         bool wantHit = _input.AttackPressed || (_input.AttackHeld && Time.time >= _nextHitTime);
         if (!wantHit)
             return;
@@ -90,8 +108,29 @@ public class PickaxeTool : MonoBehaviour
 
     void TryMineHit()
     {
-        if (_camera == null)
+        if (TryRaycastTarget(out RaycastHit hit))
+            ApplyMineHit(hit);
+    }
+
+    void TryHeavySwing()
+    {
+        if (Time.time < _heavyReadyTime)
             return;
+
+        // Удар в пустоту не должен тратить перезарядку.
+        if (!TryRaycastTarget(out RaycastHit hit))
+            return;
+
+        _heavyReadyTime = Time.time + _heavyCooldown;
+        // Своего игрока исключаем из радиуса; враги и стены получают урон как от взрыва.
+        DamageUtility.ApplyInRadius(hit.point, _heavyRadius, _heavyDamage, hit.normal, gameObject);
+    }
+
+    bool TryRaycastTarget(out RaycastHit hit)
+    {
+        hit = default;
+        if (_camera == null)
+            return false;
 
         // Строго центр экрана / прицел → вперёд
         Ray ray = _camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
@@ -100,7 +139,6 @@ public class PickaxeTool : MonoBehaviour
         float traveled = 0f;
         Vector3 origin = ray.origin;
         const float skin = 0.01f;
-        RaycastHit hit = default;
         bool found = false;
 
         while (traveled < _mineRange)
@@ -119,20 +157,22 @@ public class PickaxeTool : MonoBehaviour
             break;
         }
 
-        if (!found)
-            return;
+        return found;
+    }
 
+    void ApplyMineHit(RaycastHit hit)
+    {
         var tree = hit.collider.GetComponentInParent<HarvestableTree>();
         if (tree != null)
         {
-            tree.TryChop(_damage, hit.point, hit.normal);
+            tree.TryChop(_damage, hit.point, hit.normal, LootMultiplier);
             return;
         }
 
         MineableDebris debris = hit.collider.GetComponentInParent<MineableDebris>();
         if (debris != null)
         {
-            debris.TryMine(_damage, _stoneItem, _stonePerDebris, _lootPickupRadius, hit.point, hit.normal);
+            debris.TryMine(_damage, _stoneItem, _stonePerDebris, _lootPickupRadius, hit.point, hit.normal, LootMultiplier);
             return;
         }
 
