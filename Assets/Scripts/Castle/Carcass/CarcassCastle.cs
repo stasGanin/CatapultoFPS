@@ -289,6 +289,27 @@ public sealed class CarcassCastle : MonoBehaviour
         _bays[key] = bay;
     }
 
+    /// <summary>
+    /// Снимает модули со стен, которые после пристройки (x,y,z) оказались внутри замка — между
+    /// новой и соседней секцией. Возвращает виды снятых модулей, чтобы вызывающий вернул ресурсы.
+    /// </summary>
+    public void ClearSharedWalls(int x, int y, int z, List<CastleModuleKind> removed)
+    {
+        foreach (CarcassMetrics.WallDir dir in System.Enum.GetValues(typeof(CarcassMetrics.WallDir)))
+        {
+            Vector2Int d = CarcassMetrics.DirToDelta(dir);
+            if (!HasCell(x + d.x, y, z + d.y))
+                continue;
+            for (int slot = 0; slot < CarcassMetrics.BaysPerEdge; slot++)
+            {
+                if (!_bays.TryGetValue(BayKey(x, y, z, dir, slot), out CarcassBay bay) || bay.IsEmpty)
+                    continue;
+                removed.Add(bay.Occupant);
+                bay.ClearModule();
+            }
+        }
+    }
+
     void FillNewWalls(int x, int y, int z, CarcassMetrics.WallDir doorDir, int doorSlot)
     {
         foreach (CarcassMetrics.WallDir dir in System.Enum.GetValues(typeof(CarcassMetrics.WallDir)))

@@ -20,8 +20,8 @@ public sealed class CastleBuildController : MonoBehaviour
     [SerializeField] CastleModuleMenuUI _menuUi;
     [SerializeField] ItemDefinition _stoneItem;
     [SerializeField] float _snapRange = 28f;
-    [Tooltip("Доля стоимости модуля, которая возвращается камнем при сносе.")]
-    [SerializeField, Range(0f, 1f)] float _demolishRefund = 0.5f;
+    [Tooltip("Доля стоимости модуля, которая возвращается при сносе. 1 — полный возврат: снос = переставить.")]
+    [SerializeField, Range(0f, 1f)] float _demolishRefund = 1f;
     [SerializeField] float _demolishRange = 8f;
 
     CastleBuildMode _mode = CastleBuildMode.Closed;
@@ -189,6 +189,18 @@ public sealed class CastleBuildController : MonoBehaviour
         DemolishPrompt = null;
     }
 
+    /// <summary>Стены между старой и новой секцией теперь внутри — снимаем их и возвращаем ресурсы.</summary>
+    void RefundSharedWalls(CarcassCastle castle, int x, int y, int z)
+    {
+        var removed = new System.Collections.Generic.List<CastleModuleKind>(4);
+        castle.ClearSharedWalls(x, y, z, removed);
+        int refund = 0;
+        for (int i = 0; i < removed.Count; i++)
+            refund += RefundFor(removed[i]);
+        if (refund > 0)
+            _inventory.TryAddItem(_stoneItem, refund);
+    }
+
     int RefundFor(CastleModuleKind kind)
     {
         var definition = _menuUi != null ? _menuUi.FindDefinition(kind) : null;
@@ -331,7 +343,11 @@ public sealed class CastleBuildController : MonoBehaviour
         if (_selected.Kind == CastleModuleKind.Section)
         {
             if (_hasSectionSnap)
+            {
                 placed = castle.TryAddSection(_snapX, _snapY, _snapZ, fillOuterWalls: false, CarcassMetrics.WallDir.N, 0);
+                if (placed)
+                    RefundSharedWalls(castle, _snapX, _snapY, _snapZ);
+            }
         }
         else if (_highlightedBay != null)
         {
