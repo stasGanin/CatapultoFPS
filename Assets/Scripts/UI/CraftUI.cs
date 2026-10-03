@@ -153,6 +153,7 @@ public sealed class CraftUI : MonoBehaviour
         {
             case CraftStation.Workbench: return "Workbench";
             case CraftStation.Smelter: return "Smelter";
+            case CraftStation.Kitchen: return "Kitchen";
             default: return "Craft";
         }
     }

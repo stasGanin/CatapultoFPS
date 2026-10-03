@@ -14,8 +14,15 @@ public class InventorySlotView : MonoBehaviour, IBeginDragHandler, IDragHandler,
     [SerializeField] Outline _outline;
     [SerializeField] Text _keyHint;
 
+    static readonly Color CooldownShade = new Color(0f, 0f, 0f, 0.6f);
+
+    static Sprite _whiteSprite;
+
     InventoryUI _ui;
     IInventorySlots _host;
+    ConsumableUser _consumables;
+    Image _cooldownFill;
+    Text _cooldownText;
     int _slotIndex;
     bool _isPlayerHotbar;
 
@@ -32,6 +39,47 @@ public class InventorySlotView : MonoBehaviour, IBeginDragHandler, IDragHandler,
         _host = host;
         _slotIndex = slotIndex;
         _isPlayerHotbar = isPlayerHotbar;
+    }
+
+    void Update()
+    {
+        // ConsumableUser ставит EnemyCombatBootstrap, он может появиться позже, чем слот привязан.
+        if (_consumables == null && _host is PlayerInventory own)
+            _consumables = own.GetComponent<ConsumableUser>();
+        if (_consumables == null)
+            return;
+
+        // Заливка убывает сверху вниз по мере отката, поверх — секунды до готовности.
+        ItemDefinition item = _host.GetSlot(_slotIndex).Item;
+        float remaining = _consumables.GetCooldownRemaining(item);
+        if (remaining <= 0f)
+        {
+            if (_cooldownFill != null)
+                _cooldownFill.gameObject.SetActive(false);
+            return;
+        }
+
+        EnsureCooldownOverlay();
+        _cooldownFill.gameObject.SetActive(true);
+        _cooldownFill.fillAmount = _consumables.GetCooldownFraction(item);
+        _cooldownText.text = Mathf.CeilToInt(remaining).ToString();
+    }
+
+    void EnsureCooldownOverlay()
+    {
+        if (_cooldownFill != null)
+            return;
+
+        if (_whiteSprite == null)
+            _whiteSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0f, 0f, 1f, 1f), new Vector2(0.5f, 0.5f));
+
+        // Строим лениво: слоты бывают как префабные (в сцене), так и созданные кодом — оверлей не требует проводки.
+        _cooldownFill = UiFactory.CreateFill(transform, "CooldownFill", CooldownShade);
+        _cooldownFill.sprite = _whiteSprite;
+        _cooldownFill.type = Image.Type.Filled;
+        _cooldownFill.fillMethod = Image.FillMethod.Vertical;
+        _cooldownFill.fillOrigin = (int)Image.OriginVertical.Top;
+        _cooldownText = UiFactory.CreateText(_cooldownFill.transform, "CooldownText", 18, Color.white, TextAnchor.MiddleCenter);
     }
 
     /// <summary>Legacy bind to player inventory index.</summary>

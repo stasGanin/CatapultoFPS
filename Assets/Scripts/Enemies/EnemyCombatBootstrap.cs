@@ -26,6 +26,10 @@ public sealed class EnemyCombatBootstrap : MonoBehaviour
     {
         if (GetComponent<PlayerHealth>() == null)
             gameObject.AddComponent<PlayerHealth>();
+        if (GetComponent<ConsumableUser>() == null)
+            gameObject.AddComponent<ConsumableUser>();
+        if (GetComponent<ConsumableHandView>() == null)
+            gameObject.AddComponent<ConsumableHandView>();
         if (GetComponent<PlayerRespawn>() == null)
             gameObject.AddComponent<PlayerRespawn>();
         if (GetComponent<PlayerMana>() == null)
@@ -63,6 +67,10 @@ public sealed class EnemyCombatBootstrap : MonoBehaviour
         var staffItem = Resources.Load<ItemDefinition>("Items/StaffItem");
         if (inventory != null && staffItem != null)
             inventory.SetHotbarItem(3, staffItem, 1);
+
+        var appleItem = Resources.Load<ItemDefinition>("Items/AppleItem");
+        if (inventory != null && appleItem != null)
+            inventory.SetHotbarItem(4, appleItem, 10);
 
         var equipment = GetComponent<EquipmentController>();
         equipment?.BindCrossbow(crossbow);

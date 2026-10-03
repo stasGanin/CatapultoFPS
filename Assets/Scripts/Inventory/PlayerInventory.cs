@@ -118,11 +118,19 @@ public class PlayerInventory : MonoBehaviour, IInventorySlots
         SelectionChanged?.Invoke();
     }
 
-    /// <summary>ПКМ по предмету в инвентаре. Пока «использовать» умеют только рецепты (Blueprint).</summary>
+    /// <summary>ПКМ по предмету в инвентаре: рецепты (Blueprint) изучаются, расходники применяются.</summary>
     public bool TryUseSlot(int index)
     {
         InventorySlot slot = GetSlot(index);
-        if (slot.IsEmpty || slot.Item.Kind != ItemKind.Blueprint)
+        if (slot.IsEmpty)
+            return false;
+        if (slot.Item.IsConsumable)
+        {
+            var consumables = GetComponent<ConsumableUser>();
+            return consumables != null && consumables.TryUseFromInventory(index);
+        }
+
+        if (slot.Item.Kind != ItemKind.Blueprint)
             return false;
 
         CraftRecipe recipe = slot.Item.TeachesRecipe;

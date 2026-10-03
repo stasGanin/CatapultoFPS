@@ -13,4 +13,5 @@ public enum ItemKind
     Scattergun = 7,
     EmberLauncher = 8,
     Blueprint = 9,
+    Consumable = 10,
 }

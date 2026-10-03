@@ -37,6 +37,9 @@ public static class StationFactory
             case StationKind.ResearchTable:
                 root.AddComponent<ResearchTableInteractable>();
                 break;
+            case StationKind.Kitchen:
+                root.AddComponent<CraftStationInteractable>().Configure(CraftStation.Kitchen, def.DisplayName);
+                break;
             case StationKind.Chest:
                 root.AddComponent<StorageContainer>().Configure(def.DisplayName, 36, 2.8f);
                 break;
@@ -73,6 +76,15 @@ public static class StationFactory
                 Part(root, new Vector3(0f, h * 0.45f, 0f), new Vector3(w, h * 0.9f, d), DarkWood, ghost: ghost);
                 Part(root, new Vector3(-w * 0.2f, h + 0.05f, 0f), new Vector3(0.45f, 0.1f, 0.35f), Wood, ghost: ghost);
                 Part(root, new Vector3(w * 0.25f, h + 0.2f, 0f), new Vector3(0.25f, 0.25f, 0.25f), Arcane, emissive: true, ghost: ghost);
+                break;
+            case StationKind.Kitchen:
+                // Стол с котлом: столешница, ножки и тёмный котёл с тёплым свечением.
+                Part(root, new Vector3(0f, h - 0.06f, 0f), new Vector3(w, 0.12f, d), Wood, ghost: ghost);
+                foreach (float sx in new[] { -1f, 1f })
+                foreach (float sz in new[] { -1f, 1f })
+                    Part(root, new Vector3(sx * (w * 0.5f - 0.08f), (h - 0.12f) * 0.5f, sz * (d * 0.5f - 0.08f)), new Vector3(0.1f, h - 0.12f, 0.1f), DarkWood, ghost: ghost);
+                Part(root, new Vector3(-w * 0.25f, h + 0.15f, 0f), new Vector3(0.4f, 0.3f, 0.4f), Stone, ghost: ghost);
+                Part(root, new Vector3(-w * 0.25f, h + 0.31f, 0f), new Vector3(0.3f, 0.04f, 0.3f), Ember, emissive: true, ghost: ghost);
                 break;
             case StationKind.Chest:
                 Part(root, new Vector3(0f, h * 0.4f, 0f), new Vector3(w, h * 0.8f, d), Wood, ghost: ghost);

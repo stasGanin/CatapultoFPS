@@ -3,5 +3,6 @@ public enum CraftStation
 {
     Hand = 0,
     Workbench = 1,
-    Smelter = 2
+    Smelter = 2,
+    Kitchen = 3
 }

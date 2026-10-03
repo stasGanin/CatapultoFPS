@@ -16,6 +16,14 @@ public class ItemDefinition : ScriptableObject
     [Tooltip("Только для Blueprint: какой рецепт изучается по ПКМ в инвентаре.")]
     [SerializeField] CraftRecipe _teachesRecipe;
 
+    [Header("Consumable")]
+    [Tooltip("Сколько HP возвращает при использовании.")]
+    [SerializeField, Min(0f)] float _healAmount;
+    [Tooltip("Откат после использования, сек. Общий для всех слотов с этим предметом.")]
+    [SerializeField, Min(0f)] float _cooldownSeconds;
+    [Tooltip("Сколько длится использование (анимация поедания), сек.")]
+    [SerializeField, Min(0f)] float _useDuration;
+
     public string Id => _id;
     public string DisplayName => _displayName;
     public ItemKind Kind => _kind;
@@ -23,6 +31,10 @@ public class ItemDefinition : ScriptableObject
     public int MaxStack => Mathf.Max(1, _maxStack);
     public string Description => _description ?? string.Empty;
     public CraftRecipe TeachesRecipe => _teachesRecipe;
+    public bool IsConsumable => _kind == ItemKind.Consumable;
+    public float HealAmount => _healAmount;
+    public float CooldownSeconds => _cooldownSeconds;
+    public float UseDuration => _useDuration;
     public bool IsEquippableTool =>
         _kind == ItemKind.HandCannon || _kind == ItemKind.Pickaxe || _kind == ItemKind.Crossbow
         || _kind == ItemKind.Staff || _kind == ItemKind.Scattergun || _kind == ItemKind.EmberLauncher;
