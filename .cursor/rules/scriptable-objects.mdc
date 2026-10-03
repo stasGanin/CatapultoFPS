@@ -1,0 +1,50 @@
+---
+description: ScriptableObject configs are the source of truth for game-design values
+globs: "{Assets/Scripts/**/*.cs,Assets/Data/**/*}"
+alwaysApply: false
+---
+
+# ScriptableObjects (Project Config)
+
+Prefer ScriptableObjects for **all** tunable game-design and project settings. The user balances from assets, not by digging in code.
+
+## What belongs in an SO
+
+- Combat: damage, RPM, spread, recoil, reload time, ammo
+- Player: move/sprint speed, jump, ground check, acceleration
+- Camera: sensitivity, FOV, ADS multipliers
+- Project/feature flags and shared defaults that designers may tweak
+
+## What stays on the MonoBehaviour
+
+- Scene references (CharacterController, camera transform, muzzle)
+- Runtime state (current ammo, cooldown timers, isGrounded)
+- Wiring: which config asset this instance uses
+
+## Conventions
+
+```
+Assets/Data/
+  Player/PlayerMotorConfig.asset
+  Weapons/RifleConfig.asset
+  Camera/LookConfig.asset
+```
+
+- Type name ends with `Config` (or `Settings` for project-wide): `WeaponConfig`, `PlayerMotorConfig`
+- One concern per SO type; create new assets for variants (Pistol vs Rifle), not subclasses unless behavior differs
+- Fields: clear names, `[Min(0)]` / ranges where useful, `[Tooltip]` in Russian only if it helps designers — code comments stay Russian for non-obvious why
+- Default assets created and assigned on prefabs/scenes by the agent — do not leave null config refs
+
+## Usage pattern
+
+```csharp
+[SerializeField] WeaponConfig _config;
+
+void Fire() {
+  // значения баланса только из конфига
+  var damage = _config.Damage;
+}
+```
+
+- Do not duplicate the same tunable as both SO field and local serialized float
+- Shared constants that are never balanced can stay as `const` / static readonly in code

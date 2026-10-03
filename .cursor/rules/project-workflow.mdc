@@ -1,0 +1,57 @@
+---
+description: How the agent should change code for readable, scalable MVP work
+alwaysApply: true
+---
+
+# Project Workflow
+
+## Scope discipline
+
+- Change only what the task needs; no drive-by refactors
+- If a change would touch **more than one file**, confirm with the user first (unless they already approved the plan)
+- Prefer small vertical slices over big rewrites
+
+## Scene & asset ownership
+
+- The agent **edits Unity scenes and prefabs directly** (`.unity`, `.prefab`, YAML) when a feature needs scene wiring — do not leave “assign in Inspector yourself” as the default
+- Prefer setups that **work without fragile Inspector-only refs** when possible (e.g. code-built input bindings); still wire required scene refs (SO configs, transforms, components)
+- Wire references, components, layers, and default SO links in the scene/prefab as part of the task
+- Prefer editing existing scene objects over inventing parallel setup docs
+- Be careful with YAML merges; keep scene diffs minimal and intentional
+- After scene/prefab edits, briefly tell the user what was wired so they can verify in Editor
+- If Play Mode shows missing refs / input errors, fix them yourself in scene/scripts — do not ask the user to drag references
+
+## Structure for scale (MVP-friendly)
+
+Keep folders by **domain**, not by dump:
+
+```
+Assets/Scripts/
+  Player/
+  Weapons/
+  Camera/
+  UI/
+  Core/          # shared primitives, interfaces
+  Debug/         # cheats, overlays (keep out of production paths)
+Assets/Data/     # ScriptableObject assets (configs, balancing)
+```
+
+- One public type per file when practical; filename matches type name
+- New feature = new folder/module with a clear boundary
+- Shared code lives in `Core/` only if used by 2+ domains
+- Game-design tunables live in **ScriptableObjects** under `Assets/Data/`, not as magic numbers in scripts
+
+## Readability checklist before finishing
+
+- Public API of a class is understandable from signatures alone
+- Dependencies are explicit (serialized fields, SO configs, clear references)
+- Required scene/prefab wiring for the feature is done, not deferred
+- No dead code, unused usings, or commented-out blocks left behind
+- Errors fail loudly in editor/dev builds; never swallow exceptions silently
+
+## Communication
+
+- Chat with the user in **Russian**
+- Identifiers, code, and commit messages in **English**
+- Comments in code in **Russian**
+- Prefer short, direct answers; expand only when asked

@@ -1,0 +1,9 @@
+{
+    "version": 1,
+    "sections": [ { "x": 0, "y": 0, "z": 0 } ],
+    "openings": [
+        { "x": 0, "y": 0, "z": 0, "wall": 0, "col": 0, "row": 0, "kind": 1 }
+    ],
+    "powers": [],
+    "smalls": []
+}

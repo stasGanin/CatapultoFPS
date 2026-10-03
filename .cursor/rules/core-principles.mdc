@@ -1,0 +1,50 @@
+---
+description: Core design principles for solid, scalable MVP code
+alwaysApply: true
+---
+
+# Core Principles
+
+This is a demo/MVP, but write code as if another developer must extend it next week.
+
+## Priorities (in order)
+
+1. **Clarity** — a stranger should understand intent without a walkthrough
+2. **Correctness** — prefer simple working code over clever abstractions
+3. **Extensibility** — seams for growth, not frameworks for imaginary features
+
+## Principles
+
+- **KISS**: choose the simplest solution that works and stays readable
+- **YAGNI**: do not build systems for features that are not requested
+- **DRY**: extract duplication only when it has a clear shared meaning (not just similar lines)
+- **SRP**: one class/method = one reason to change
+- **Composition over inheritance**: prefer components, interfaces, and small collaborators
+
+## Naming
+
+- Names describe **what** and **why**, not implementation trivia
+- Prefer `WeaponFireController` over `Mgr`, `Helper`, `Util`, `Data2`
+- Booleans read as questions: `isReady`, `canFire`, `hasTarget`
+- Avoid abbreviations unless domain-standard (`hp`, `fps`, `ui`)
+
+## Comments
+
+- Comments in **Russian**
+- Explain **why**, not what the code already says
+- No narrating comments (`// увеличиваем i`)
+- Document non-obvious constraints, invariants, and Unity lifecycle gotchas
+
+## When adding complexity
+
+Only introduce a pattern (events, DI, state machines, ScriptableObjects architecture) when:
+- there are **2+ real call sites**, or
+- it removes a concrete readability/scaling pain **now**
+---
+
+# Anti-patterns to avoid
+
+- God classes (`GameManager` that owns movement, UI, weapons, and networking)
+- Hidden side effects in properties/getters
+- Magic numbers without named constants
+- Premature micro-optimization before a measured problem

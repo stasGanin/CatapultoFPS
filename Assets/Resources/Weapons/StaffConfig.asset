@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1e00100000000000000000000000014, type: 3}
+  m_Name: StaffConfig
+  m_EditorClassIdentifier: Assembly-CSharp::StaffConfig
+  _raiseDuration: 0.5
+  _lowerDuration: 0.35
+  _missilesPerSecond: 1
+  _manaCostPerMissile: 12
+  _searchRadius: 32
+  _missileSpeed: 16
+  _missileDamage: 10
+  _missileLifetime: 5
+  _missileRadius: 0.16
+  _projectileVisual: {fileID: 1795072395756124, guid: d223fbf886f2aa4408426d093198ef12, type: 2}
+  _impactVisual: {fileID: 1974592250055434, guid: b15a120c1390db449b8eb5af19d62424, type: 2}
+  _muzzleFlash: {fileID: 1434253245967370, guid: 6b80d5fba4e83cb4584421b219575610, type: 2}

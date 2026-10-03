@@ -1,0 +1,38 @@
+using UnityEngine;
+
+/// <summary>
+/// Item recipe (balance + display). Icons load from Resources/ItemIcons/{id} when unset.
+/// </summary>
+[CreateAssetMenu(menuName = "Catapulto/Inventory/Item Definition", fileName = "ItemDefinition")]
+public class ItemDefinition : ScriptableObject
+{
+    [SerializeField] string _id = "item";
+    [SerializeField] string _displayName = "Item";
+    [SerializeField] ItemKind _kind = ItemKind.None;
+    [SerializeField] Color _iconColor = Color.white;
+    [SerializeField] Sprite _icon;
+    [SerializeField] int _maxStack = 1;
+    [SerializeField, TextArea(2, 4)] string _description;
+
+    public string Id => _id;
+    public string DisplayName => _displayName;
+    public ItemKind Kind => _kind;
+    public Color IconColor => _iconColor;
+    public int MaxStack => Mathf.Max(1, _maxStack);
+    public string Description => _description ?? string.Empty;
+    public bool IsEquippableTool =>
+        _kind == ItemKind.HandCannon || _kind == ItemKind.Pickaxe || _kind == ItemKind.Crossbow
+        || _kind == ItemKind.Staff || _kind == ItemKind.Scattergun || _kind == ItemKind.EmberLauncher;
+
+    public Sprite Icon
+    {
+        get
+        {
+            if (_icon != null)
+                return _icon;
+            if (string.IsNullOrEmpty(_id))
+                return null;
+            return Resources.Load<Sprite>($"ItemIcons/{_id}");
+        }
+    }
+}

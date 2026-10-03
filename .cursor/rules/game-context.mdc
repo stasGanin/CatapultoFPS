@@ -1,0 +1,24 @@
+---
+description: High-level game design context for Catapulto (Volcanoids-like coop)
+alwaysApply: true
+---
+
+# Game Context
+
+Co-op crafting shooter inspired by Volcanoids.
+
+## Core loop
+
+Destroy enemy castles → loot → upgrade own castle → progress story.
+
+## Pillars
+
+- Enemy castles shoot from towers and spawn troops
+- Players defend and build their own castle under siege
+- Own castle can relocate: a wizard teleports it between available platforms (subway-like hubs)
+
+## Current focus
+
+**Carcass sections:** player/enemy spawn via `CarcassBuilder` — unique columns + shared wall (2 modules/side). B menu: Section, Wall, Window, Door. Door leaf opens on E.
+
+**Parked:** `SquareCastleBuilder` square hull; F9 8×8 layout editor in `Assets/Scripts/Castle/Layout/`. Restore notes: `C:\Feeds\Rules\catapulto-castle-sections-restore.md`.

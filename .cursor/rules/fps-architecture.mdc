@@ -1,0 +1,32 @@
+---
+description: FPS domain boundaries so MVP gameplay stays modular and extensible
+globs: "Assets/Scripts/**/*.cs"
+alwaysApply: false
+---
+
+# FPS Architecture (MVP → Scale)
+
+Design for a small demo first, but keep **clear ownership** so systems can grow independently.
+
+## Suggested responsibilities
+
+| Module | Owns | Does not own |
+|--------|------|--------------|
+| Player Motor | move, jump, ground check | shooting, UI |
+| Camera / Look | aim, sensitivity | weapon logic |
+| Weapon | fire, reload, ammo, hitscan/projectile | player movement |
+| Health / Damage | hp, death, damage apply | VFX presentation details |
+| UI | HUD bind to state | gameplay rules |
+
+## Rules of thumb
+
+- A weapon should not move the player; the player should not draw the HUD directly inside fire logic
+- Tunable values (spread, RPM, damage, FOV, move speed…) live **only** in ScriptableObjects under `Assets/Data/`
+- Hitscan/aim logic returns a result (`HitResult`); VFX/audio react to that result
+- Keep networking/multiplayer hooks **out** until needed — but avoid writing code that hard-locks to a single MonoBehaviour singleton for core combat
+
+## Scaling path (when the demo grows)
+
+1. Add/extend SO configs first when balancing grows (new weapons = new SO assets, same type)
+2. Introduce a thin `IDamageable` (or similar) before adding many damage sources
+3. Add state only when modes appear (menu, playing, paused, dead) — not before

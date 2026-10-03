@@ -1,0 +1,49 @@
+---
+description: C# and Unity conventions for readable, maintainable gameplay code
+globs: "**/*.cs"
+alwaysApply: false
+---
+
+# C# / Unity Standards
+
+## Style
+
+- Modern C#: meaningful nullability, `var` only when type is obvious
+- `SerializeField` private fields for Inspector wiring; public only for true API
+- Use `[Header]` / `[Tooltip]` sparingly for non-obvious inspector fields
+- Prefer `readonly` / clear ownership of references after `Awake`/`Start`
+
+## Unity lifecycle
+
+- `Awake`: cache components, wire self
+- `Start`: talk to other objects that must already exist
+- `OnEnable`/`OnDisable`: subscribe/unsubscribe events (always paired)
+- Keep `Update` thin: input → intent; heavy work in focused methods/systems
+
+```csharp
+// BAD: everything in Update, unclear ownership
+void Update() {
+  hp -= dt; Reload(); Aim(); UI();
+}
+
+// GOOD: Update orchestrates, methods have one job
+void Update() {
+  _input.Read();
+  _motor.Tick(Time.deltaTime);
+  _weapon.Tick(Time.deltaTime);
+}
+```
+
+## Architecture seams (MVP → scale)
+
+- Split **input**, **simulation**, **view/VFX** when a class grows past ~200 lines or 2 responsibilities
+- **All game-design tunables** (damage, speed, FOV, RPM, sensitivity…) come from ScriptableObject configs — not hardcoded literals or ad-hoc Inspector floats on every MonoBehaviour
+- MonoBehaviours hold a reference to the SO (`[SerializeField] PlayerMotorConfig _config`) and read values from it
+- Prefer events/C# actions for decoupled UI and feedback; avoid circular MonoBehaviour references
+- Do not introduce a full DI framework unless the project already uses one
+
+## Safety
+
+- Null-check external/scene references once at init; then assume valid or fail early
+- Use layers/tags via constants or serialized references — no stringly-typed spam
+- Physics/raycasts: name masks; document what they hit and why

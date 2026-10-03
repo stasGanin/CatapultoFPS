@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b29a9b503d38496984bae54355e148fd, type: 3}
+  m_Name: CrossbowConfig
+  m_EditorClassIdentifier: 
+  _shotsPerSecond: 8
+  _automatic: 1
+  _projectileRadius: 0.06
+  _projectileMass: 0.2
+  _muzzleSpeed: 55
+  _blastRadius: 0.1
+  _explosionForce: 0
+  _projectileLifetime: 3
+  _aimRange: 80
+  _projectileVisual: {fileID: 1238843893459588, guid: df1a1922af2b37e4f9ade4203d8566bd, type: 2}
+  _impactVisual: {fileID: 1879272669879180, guid: 9aef5c2b44fcd9a45b7789e47f954670, type: 2}
+  _muzzleFlash: {fileID: 1000012903210382, guid: e165b34d6402b6449bce6c32e18c8419, type: 2}

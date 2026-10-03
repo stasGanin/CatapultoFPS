@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "blender": {
+      "command": "C:\\Users\\sgani\\.local\\bin\\uvx.exe",
+      "args": ["--system-certs", "blender-mcp"],
+      "env": {
+        "UV_SYSTEM_CERTS": "1",
+        "SSLKEYLOGFILE": ""
+      }
+    }
+  }
+}

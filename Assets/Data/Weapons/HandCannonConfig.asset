@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b29a9b503d38496984bae54355e148fd, type: 3}
+  m_Name: HandCannonConfig
+  m_EditorClassIdentifier: 
+  _shotsPerSecond: 1
+  _automatic: 0
+  _projectileRadius: 0.22
+  _projectileMass: 8
+  _muzzleSpeed: 45
+  _blastRadius: 1.15
+  _explosionForce: 90
+  _projectileLifetime: 8
+  _aimRange: 100
+  _projectileVisual: {fileID: 1238843893459588, guid: 46bf08350ee566542b0bb087e35a1020, type: 2}
+  _impactVisual: {fileID: 1879272669879180, guid: 194f033b43d363949850b7e8cf1cff4d, type: 2}
+  _muzzleFlash: {fileID: 1000012903210382, guid: 033d08e548a8e0c4b85a2110d068aaa0, type: 2}

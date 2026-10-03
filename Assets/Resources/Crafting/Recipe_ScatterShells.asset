@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1e00100000000000000000000000021, type: 3}
+  m_Name: Recipe_ScatterShells
+  m_EditorClassIdentifier: Assembly-CSharp::CraftRecipe
+  _id: scatter_shells
+  _displayName: Scatter Shells
+  _description: Pack bone chips into a handful of scattergun shells.
+  _category: 2
+  _output: {fileID: 11400000, guid: f1b10100000000000000000000000003, type: 2}
+  _outputCount: 8
+  _ingredients:
+  - Item: {fileID: 11400000, guid: d9e0f1a2b3c4d5e6f708192a3b4c5d10, type: 2}
+    Count: 1
+  - Item: {fileID: 11400000, guid: f1b10100000000000000000000000001, type: 2}
+    Count: 1

@@ -1,0 +1,11 @@
+---
+description: Always replace old Windows player build; do not keep multiple builds
+alwaysApply: true
+---
+
+# Windows Builds
+
+- Keep a single Windows player under `Builds/Windows/`.
+- Before each new build: delete the existing `Builds/Windows` output (folder contents / previous exe + `_Data`), then build into the same path.
+- Do not create dated folders, `Build2`, `Windows_old`, or parallel player copies unless the user explicitly asks.
+- Prefer the existing menu / batch entry: `Catapulto/Build Windows x64` → `Builds/Windows/CatapultoFPS.exe`.
