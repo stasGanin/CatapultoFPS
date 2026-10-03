@@ -79,6 +79,9 @@ public sealed class EnemySpawnerModule : MonoBehaviour, IDamageable
 
     public void ApplyDamage(float amount, in DamageInfo info)
     {
+        // Вражеские атаки (взрывы, прыжки) не ломают свои же спавнеры.
+        if (!info.FromPlayer)
+            return;
         if (_dead || amount <= 0f)
             return;
 

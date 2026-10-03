@@ -102,6 +102,9 @@ public sealed class EnemyCastleSpawnModule : MonoBehaviour, IDamageable, ICastle
 
     public void ApplyDamage(float amount, in DamageInfo info)
     {
+        // Вражеские атаки (взрывы, прыжки) не ломают свои же спавнеры.
+        if (!info.FromPlayer)
+            return;
         // Authored wall spawners break via chunks; runtime totems have no chunks and use HP.
         var authored = GetComponent<CastleModuleRoot>();
         if (authored != null && GetComponentInChildren<CastleWallChunk>(true) != null)
