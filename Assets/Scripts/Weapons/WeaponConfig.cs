@@ -17,6 +17,7 @@ public class WeaponConfig : ScriptableObject
 
     [Header("Aim")]
     [SerializeField, Min(5f)] float _aimRange = 80f;
+    [SerializeField, Min(5f)] float _autoRange = 70f;
 
     [Header("VFX")]
     [SerializeField] GameObject _projectileVisual;
@@ -33,6 +34,8 @@ public class WeaponConfig : ScriptableObject
     public float ExplosionForce => _explosionForce;
     public float ProjectileLifetime => _projectileLifetime;
     public float AimRange => _aimRange;
+    /// <summary>Дальность поиска цели у башни в автоматическом режиме.</summary>
+    public float AutoRange => _autoRange;
     public GameObject ProjectileVisual => _projectileVisual;
     public GameObject ImpactVisual => _impactVisual;
     public GameObject MuzzleFlash => _muzzleFlash;

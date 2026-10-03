@@ -67,6 +67,10 @@ public sealed class CastleTower : MonoBehaviour, IDamageable
         tower._muzzle = parts.Muzzle;
         tower._seat = parts.Seat;
         parts.Hatch.AddComponent<TowerHatch>().Bind(tower);
+        if (castle.IsPlayerOwned)
+            tower.gameObject.AddComponent<CastleTowerAutoFire>();
+        else
+            tower.gameObject.AddComponent<EnemyTowerFire>();
         tower.MoveToFloor(floorY);
         return tower;
     }
@@ -88,10 +92,10 @@ public sealed class CastleTower : MonoBehaviour, IDamageable
         _pitch.rotation = Quaternion.LookRotation(direction, Vector3.up);
     }
 
-    /// <summary>Урон наносят только враги: свои взрывы рядом с башней её не трогают.</summary>
+    /// <summary>Башню бьёт только противоположная сторона: свои взрывы рядом с ней её не трогают.</summary>
     public void ApplyDamage(float amount, in DamageInfo info)
     {
-        if (info.FromPlayer || _health <= 0f)
+        if (info.FromPlayer == _castle.IsPlayerOwned || _health <= 0f)
             return;
 
         _health -= amount;

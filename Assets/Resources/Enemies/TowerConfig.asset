@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52691b86113148799f52e64eee3b5969, type: 3}
+  m_Name: TowerConfig
+  m_EditorClassIdentifier: 
+  _maxHealth: 20
+  _moveSpeed: 6.0
+  _standoffDistance: 10
+  _hoverHeight: 1.6
+  _aggroRange: 28
+  _loseSightGrace: 1.2
+  _raidRange: 90
+  _attackRange: 60
+  _damage: 12
+  _siegeDamage: 2
+  _telegraphTime: 0.45
+  _burstCount: 1
+  _burstInterval: 0.16
+  _cooldown: 3
+  _cooldownJitter: 0.5
+  _projectileSpeed: 24
+  _leadFactor: 0.35

@@ -17,10 +17,11 @@ MonoBehaviour:
   _projectileRadius: 0.3
   _projectileMass: 12
   _muzzleSpeed: 60
-  _blastRadius: 1.4
+  _blastRadius: 2.8
   _explosionForce: 900
   _projectileLifetime: 8
   _aimRange: 120
+  _autoRange: 70
   _projectileVisual: {fileID: 0}
   _impactVisual: {fileID: 0}
   _muzzleFlash: {fileID: 0}

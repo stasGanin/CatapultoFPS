@@ -20,7 +20,6 @@ public sealed class TowerOperator : MonoBehaviour
     PlayerMotor _motor;
     CharacterController _controller;
     Camera _camera;
-    ItemDefinition _ammoItem;
     WeaponConfig _config;
     CastleTower _tower;
     int _enteredFrame;
@@ -51,11 +50,9 @@ public sealed class TowerOperator : MonoBehaviour
         _motor = GetComponent<PlayerMotor>();
         _controller = GetComponent<CharacterController>();
         _camera = GetComponentInChildren<Camera>();
-        if (_ammoItem == null)
-            _ammoItem = Resources.Load<ItemDefinition>("Items/CannonballItem");
         if (_config == null)
             _config = Resources.Load<WeaponConfig>("Castle/Towers/CannonTowerConfig");
-        if (_input == null || _camera == null || _config == null || _ammoItem == null)
+        if (_input == null || _camera == null || _config == null || CastleAmmoStorage.Cannonball == null)
         {
             Debug.LogError("TowerOperator: нет ввода, камеры, конфига башни или предмета-ядра.", this);
             return;
@@ -70,7 +67,7 @@ public sealed class TowerOperator : MonoBehaviour
         if (_motor != null)
             _motor.enabled = false;
         _inventory.NotifyGameplayBlockChanged();
-        GameMessages.Post($"Tower: LMB fire · E leave · cannonballs in chests: {CountAmmo()}");
+        GameMessages.Post($"Tower: LMB fire · E leave · cannonballs in chests: {CastleAmmoStorage.Count(_tower.Castle)}");
     }
 
     void Update()
@@ -115,7 +112,7 @@ public sealed class TowerOperator : MonoBehaviour
 
     void TryFire()
     {
-        if (!TryConsumeAmmo())
+        if (!CastleAmmoStorage.TryConsume(_tower.Castle))
         {
             if (Time.time >= _nextNoAmmoMessageTime)
             {
@@ -132,25 +129,6 @@ public sealed class TowerOperator : MonoBehaviour
         Vector3 direction = WeaponAim.GetDirection(origin, aimPoint, _camera.transform.forward);
         ProjectileVfx.SpawnMuzzleFlash(_config.MuzzleFlash, _tower.Muzzle, origin, direction);
         Cannonball.Launch(_config, origin, direction, _controller, _tower.GetComponent<Collider>());
-    }
-
-    int CountAmmo()
-    {
-        int total = 0;
-        foreach (var storage in _tower.Castle.GetComponentsInChildren<StorageContainer>())
-            total += storage.CountItem(_ammoItem);
-        return total;
-    }
-
-    bool TryConsumeAmmo()
-    {
-        foreach (var storage in _tower.Castle.GetComponentsInChildren<StorageContainer>())
-        {
-            if (storage.TryConsumeItem(_ammoItem, 1))
-                return true;
-        }
-
-        return false;
     }
 
     /// <summary>Возвращает игрока в комнату под люком; при обрушении башни — ещё и с уроном.</summary>

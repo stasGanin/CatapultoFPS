@@ -3,17 +3,26 @@ using UnityEngine;
 /// <summary>Spawns a carcass castle: one mage section, shared columns/walls on expand.</summary>
 public static class CarcassBuilder
 {
+    const int StartingCannonballs = 100;
+
     public static GameObject BuildPlayer(Vector3 center, float yawDegrees)
     {
         var root = CreateRoot("PlayerCastle_T1", center, yawDegrees, playerOwned: true);
         root.AddComponent<CastleFrame>().Bind(1, new System.Collections.Generic.List<CastleSocket>());
         var carcass = root.AddComponent<CarcassCastle>();
         carcass.Initialize(true);
-        carcass.TryAddSection(0, 0, 0, fillOuterWalls: true, CarcassMetrics.WallDir.N, doorSlot: 0);
+        // Стартовый замок без стен: игрок достраивает их сам через меню B.
+        carcass.TryAddSection(0, 0, 0, fillOuterWalls: false, CarcassMetrics.WallDir.N, doorSlot: 0);
+        carcass.TryAddTower(new TowerCorner(0, 0, 1, 1));
 
         Vector3 mageLocal = CarcassMetrics.CellCenterLocal(0, 0, 0) + Vector3.up * 0.05f;
         var mage = CastleMageVisual.Spawn(root.transform, mageLocal, heightScale: 2.8f, attachMageComponent: false);
         mage.AddComponent<OwnMageStation>();
+
+        Vector3 chestLocal = mageLocal + new Vector3(2.2f, 0.02f, 0f);
+        GameObject chest = FurnitureFactory.CreateChest(root.transform.TransformPoint(chestLocal), root.transform.rotation);
+        chest.transform.SetParent(root.transform, true);
+        chest.GetComponent<StorageContainer>().TryAddItem(CastleAmmoStorage.Cannonball, StartingCannonballs);
         return root;
     }
 
@@ -24,6 +33,8 @@ public static class CarcassBuilder
         var carcass = root.AddComponent<CarcassCastle>();
         carcass.Initialize(false);
         carcass.TryAddSection(0, 0, 0, fillOuterWalls: true, CarcassMetrics.WallDir.N, doorSlot: 0);
+        carcass.TryAddTower(new TowerCorner(0, 0, 0, 0));
+        carcass.TryAddTower(new TowerCorner(0, 0, 1, 1));
 
         Vector3 mageLocal = CarcassMetrics.CellCenterLocal(0, 0, 0) + Vector3.up * 0.05f;
         var mage = CastleMageVisual.Spawn(root.transform, mageLocal, heightScale: 2.8f, attachMageComponent: true);
