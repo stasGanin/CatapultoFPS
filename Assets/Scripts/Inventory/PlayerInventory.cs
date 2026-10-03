@@ -13,8 +13,7 @@ public class PlayerInventory : MonoBehaviour, IInventorySlots
     [SerializeField] PlayerInputReader _input;
     [SerializeField] ItemDefinition _startingCannon;
     [SerializeField] ItemDefinition _startingPickaxe;
-    [SerializeField] ItemDefinition _startingStone;
-    [SerializeField] int _startingStoneCount = 100;
+    [SerializeField] PlayerLoadoutConfig _loadout;
 
     readonly InventorySlot[] _slots = new InventorySlot[TotalSize];
     int _selectedHotbarIndex;
@@ -139,19 +138,47 @@ public class PlayerInventory : MonoBehaviour, IInventorySlots
         if (_startingPickaxe != null)
             _slots[1] = new InventorySlot { Item = _startingPickaxe, Count = 1 };
 
-        if (_startingStone == null)
-            _startingStone = Resources.Load<ItemDefinition>("Items/StoneItem");
-        if (_startingStone != null && _startingStoneCount > 0)
-            TryAddItem(_startingStone, _startingStoneCount);
-
-        var wood = Resources.Load<ItemDefinition>("Items/WoodItem");
-        if (wood != null)
-            TryAddItem(wood, 20);
-        var ore = Resources.Load<ItemDefinition>("Items/OreItem");
-        if (ore != null)
-            TryAddItem(ore, 9);
+        GiveStartingLoadout();
 
         _selectedHotbarIndex = 0;
+    }
+
+    /// <summary>
+    /// Стартовый набор кладём только в сумку: хотбар позже заполняет EnemyCombatBootstrap
+    /// (арбалет, посох) через SetHotbarItem, и всё, что лежало там, перезаписывалось.
+    /// </summary>
+    void GiveStartingLoadout()
+    {
+        if (_loadout == null)
+        {
+            Debug.LogError("PlayerInventory: no PlayerLoadoutConfig assigned — player starts with an empty bag.", this);
+            return;
+        }
+
+        foreach (var entry in _loadout.BagItems)
+        {
+            int added = AddToBag(entry.Item, entry.Count);
+            if (entry.Item != null && added < entry.Count)
+                Debug.LogWarning($"PlayerInventory: bag full, only {added}/{entry.Count} {entry.Item.DisplayName} given.", this);
+        }
+    }
+
+    int AddToBag(ItemDefinition item, int count)
+    {
+        if (item == null || count <= 0)
+            return 0;
+
+        int remaining = count;
+        for (int i = HotbarSize; i < TotalSize && remaining > 0; i++)
+        {
+            if (!_slots[i].IsEmpty)
+                continue;
+            int add = Mathf.Min(item.MaxStack, remaining);
+            _slots[i] = new InventorySlot { Item = item, Count = add };
+            remaining -= add;
+        }
+
+        return count - remaining;
     }
 
     void Update()

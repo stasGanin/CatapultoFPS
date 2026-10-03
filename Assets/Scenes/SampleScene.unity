@@ -1447,8 +1447,7 @@ MonoBehaviour:
   _input: {fileID: 1002000006}
   _startingCannon: {fileID: 11400000, guid: d9e0f1a2b3c4d5e6f708192a3b4c5d01, type: 2}
   _startingPickaxe: {fileID: 11400000, guid: d9e0f1a2b3c4d5e6f708192a3b4c5d02, type: 2}
-  _startingStone: {fileID: 0}
-  _startingStoneCount: 100
+  _loadout: {fileID: 11400000, guid: 91fa633d8aea7db459494d2d54e78949, type: 2}
 --- !u!114 &1002000014
 MonoBehaviour:
   m_ObjectHideFlags: 0
