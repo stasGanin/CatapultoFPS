@@ -18,7 +18,6 @@ public static class CarcassMetrics
     public const int BaysPerEdge = 2;
     public const int MaxPlanRadius = 1;
     public const int MaxFloors = 2;
-    public const float ArtToMeters = 100f;
 
     public enum WallDir
     {

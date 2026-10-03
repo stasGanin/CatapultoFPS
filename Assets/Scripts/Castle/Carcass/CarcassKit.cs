@@ -27,6 +27,9 @@ public static class CarcassKit
     static GameObject _windowBroken;
     static GameObject _doorBroken;
     static Transform _hidden;
+    // Масштаб кита считаем по эталону — высоте колонны каркаса, а не угадываем по размеру:
+    // тридешник экспортирует то в см с корнем 0.01, то с group1 = 0.33. Эталон переживает оба варианта.
+    static float _kitScale = 1f;
 
     public static GameObject CreateCorner(Transform parent, Vector3 localPos)
     {
@@ -214,6 +217,7 @@ public static class CarcassKit
         _hidden = new GameObject("CarcassKitTemplates").transform;
         _hidden.gameObject.SetActive(false);
         UnityEngine.Object.DontDestroyOnLoad(_hidden.gameObject);
+        _kitScale = MeasureKitScale();
 
         _corner = CaptureNamed(CarcassPath, "Column", "Corner") ?? FallbackBox("Column", new Vector3(1f, 3.36f, 1f));
         _floor = CaptureNamed(CarcassPath, "Floor", "Floor") ?? FallbackBox("Floor", new Vector3(14f, 0.37f, 14f));
@@ -289,14 +293,29 @@ public static class CarcassKit
 
     static void ApplyMeterScale(GameObject root)
     {
-        for (int i = 0; i < 3; i++)
+        root.transform.localScale *= _kitScale;
+    }
+
+    /// <summary>Множитель, при котором колонна из Carcass.fbx получается высотой ColumnHeight.</summary>
+    static float MeasureKitScale()
+    {
+        var prefab = Resources.Load<GameObject>(CarcassPath);
+        if (prefab == null)
+            return 1f;
+
+        GameObject instance = UnityEngine.Object.Instantiate(prefab);
+        MeshFilter column = FindMesh(instance, new[] { "Column", "Corner" });
+        var renderer = column != null ? column.GetComponent<Renderer>() : null;
+        float height = renderer != null ? renderer.bounds.size.y : 0f;
+        UnityEngine.Object.Destroy(instance);
+
+        if (height < 1e-4f)
         {
-            Bounds b = EncapsulateWorld(root);
-            float max = Mathf.Max(b.size.x, Mathf.Max(b.size.y, b.size.z));
-            if (max >= 0.5f)
-                return;
-            root.transform.localScale *= CarcassMetrics.ArtToMeters;
+            Debug.LogError("CarcassKit: cannot measure column height in Carcass.fbx — kit scale left at 1.");
+            return 1f;
         }
+
+        return CarcassMetrics.ColumnHeight / height;
     }
 
     static MeshFilter FindMesh(GameObject root, string[] needles)

@@ -27,8 +27,9 @@ public sealed class EnemySpawnDebugHud : MonoBehaviour
 
     void Awake()
     {
-        SpawningEnabled = true;
-        _applied = true;
+        // По умолчанию враги выключены — включаются по F8, когда нужен бой.
+        SpawningEnabled = false;
+        _applied = false;
         EnsureEventSystem();
         Build();
         RefreshVisual();
