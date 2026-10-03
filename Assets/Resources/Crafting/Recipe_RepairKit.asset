@@ -23,3 +23,5 @@ MonoBehaviour:
     Count: 4
   - Item: {fileID: 11400000, guid: d9e0f1a2b3c4d5e6f708192a3b4c5d13, type: 2}
     Count: 2
+  _station: 0
+  _requiresUnlock: 0

@@ -66,6 +66,9 @@ public sealed class CarcassLadder : MonoBehaviour, IPlayerInteractable
 
         var hatch = BuildHatch(parent, new Vector3(ladderX + HatchSize * 0.5f - LadderWidth * 0.25f, upperFloorTop, ladderZ));
         hatch.Bind(castle, downArrival, "Climb down");
+
+        KeepClear(parent, downArrival);
+        KeepClear(parent, upArrival);
     }
 
     void Bind(Transform castle, Vector3 destinationLocal, string label)
@@ -73,6 +76,22 @@ public sealed class CarcassLadder : MonoBehaviour, IPlayerInteractable
         _castle = castle;
         _destinationLocal = destinationLocal;
         _label = label;
+    }
+
+    /// <summary>
+    /// Пустой триггер там, куда ставим игрока: станции на сетке пола проверяют триггеры
+    /// и не встанут сюда — иначе переход выбросит игрока внутрь верстака.
+    /// Отдельный объект, не ребёнок лестницы, чтобы луч E по нему не находил лестницу.
+    /// </summary>
+    static void KeepClear(Transform parent, Vector3 arrivalLocal)
+    {
+        var go = new GameObject("LadderKeepClear");
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = arrivalLocal;
+        var box = go.AddComponent<BoxCollider>();
+        box.isTrigger = true;
+        box.center = new Vector3(0f, 1f, 0f);
+        box.size = new Vector3(1.2f, 2f, 1.2f);
     }
 
     static CarcassLadder BuildLadder(Transform parent, Vector3 baseLocal, float height)

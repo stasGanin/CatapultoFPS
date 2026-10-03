@@ -12,4 +12,5 @@ public enum ItemKind
     Furniture = 6,
     Scattergun = 7,
     EmberLauncher = 8,
+    Blueprint = 9,
 }

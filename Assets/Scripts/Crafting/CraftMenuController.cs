@@ -17,6 +17,8 @@ public sealed class CraftMenuController : MonoBehaviour
     bool _open;
 
     public bool IsOpen => _open;
+    /// <summary>Чьи рецепты показываем: Hand — меню C, иначе станция, у которой нажали E.</summary>
+    public CraftStation Station { get; private set; } = CraftStation.Hand;
     public CraftCatalog Catalog => _catalog;
     public PlayerInventory Inventory => _inventory;
 
@@ -49,7 +51,10 @@ public sealed class CraftMenuController : MonoBehaviour
 
         if (_input.CraftMenuPressed)
         {
-            Toggle();
+            if (_open && Station == CraftStation.Hand)
+                Close();
+            else
+                OpenAt(CraftStation.Hand);
             return;
         }
 
@@ -68,10 +73,25 @@ public sealed class CraftMenuController : MonoBehaviour
             Open();
     }
 
-    public void Open()
+    public void Open() => OpenAt(CraftStation.Hand);
+
+    public bool Knows(CraftRecipe recipe)
     {
-        if (_open)
+        var book = GetComponent<PlayerRecipeBook>();
+        return book != null ? book.Knows(recipe) : recipe != null && !recipe.RequiresUnlock;
+    }
+
+    public void OpenAt(CraftStation station)
+    {
+        if (_open && Station == station)
             return;
+        Station = station;
+        if (_open)
+        {
+            // Переключились с одной станции на другую — перестраиваем список.
+            OpenChanged?.Invoke(true);
+            return;
+        }
 
         _inventory?.CloseMenuAndStorage();
         OwnMageStation.CloseOpen();

@@ -77,6 +77,20 @@ public sealed class StorageContainer : MonoBehaviour, IInventorySlots, ICastleMo
         Changed?.Invoke();
     }
 
+    public bool IsEmpty
+    {
+        get
+        {
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                if (!_slots[i].IsEmpty)
+                    return false;
+            }
+
+            return true;
+        }
+    }
+
     public bool IsInRange(Vector3 worldPos)
     {
         float r = Mathf.Max(0.5f, _interactRange);

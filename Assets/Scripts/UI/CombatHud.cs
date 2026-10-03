@@ -34,7 +34,10 @@ public sealed class CombatHud : MonoBehaviour
     GameObject _ammoRoot;
     Text _ammoLabel;
     GameObject _legend;
+    Text _message;
+    float _messageUntil;
     float _nextRefresh;
+    const float MessageTime = 2.5f;
 
     void Awake()
     {
@@ -44,8 +47,20 @@ public sealed class CombatHud : MonoBehaviour
         Build();
     }
 
+    void OnEnable() => GameMessages.Posted += ShowMessage;
+    void OnDisable() => GameMessages.Posted -= ShowMessage;
+
+    void ShowMessage(string text)
+    {
+        _message.text = text;
+        _messageUntil = Time.unscaledTime + MessageTime;
+    }
+
     void Update()
     {
+        float left = _messageUntil - Time.unscaledTime;
+        _message.color = new Color(1f, 0.95f, 0.8f, Mathf.Clamp01(left / 0.5f));
+
         if (_input != null && _input.HelpTogglePressed)
             _legend.SetActive(!_legend.activeSelf);
 
@@ -133,6 +148,11 @@ public sealed class CombatHud : MonoBehaviour
         var shadow = _ammoLabel.gameObject.AddComponent<Shadow>();
         shadow.effectDistance = new Vector2(1.5f, -1.5f);
         _ammoRoot.SetActive(false);
+
+        RectTransform messageRt = UiFactory.CreateRect(root, "Message", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -110f), new Vector2(900f, 40f));
+        _message = UiFactory.CreateText(messageRt, "MessageText", 24, Color.clear, TextAnchor.MiddleCenter);
+        _message.fontStyle = FontStyle.Bold;
+        _message.gameObject.AddComponent<Shadow>().effectDistance = new Vector2(2f, -2f);
 
         Image legend = UiFactory.CreatePanel(root, "Legend", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -24f), new Vector2(520f, 62f));
         _legend = legend.gameObject;

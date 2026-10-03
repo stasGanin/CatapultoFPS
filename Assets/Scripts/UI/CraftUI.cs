@@ -18,6 +18,7 @@ public sealed class CraftUI : MonoBehaviour
     Font _font;
     GameObject _root;
     Transform _listRoot;
+    Text _header;
     Text _title;
     Text _desc;
     Text _outputLabel;
@@ -136,8 +137,24 @@ public sealed class CraftUI : MonoBehaviour
     {
         if (_root != null)
             _root.SetActive(_menu != null && _menu.IsOpen);
-        if (_menu != null && _menu.IsOpen)
-            RefreshAll();
+        if (_menu == null || !_menu.IsOpen)
+            return;
+        if (_header != null)
+            _header.text = HeaderFor(_menu.Station);
+        // Станция могла смениться, а рецепты — изучиться: список строим заново при каждом открытии.
+        if (_built)
+            RebuildRows();
+        RefreshAll();
+    }
+
+    static string HeaderFor(CraftStation station)
+    {
+        switch (station)
+        {
+            case CraftStation.Workbench: return "Workbench";
+            case CraftStation.Smelter: return "Smelter";
+            default: return "Craft";
+        }
     }
 
     void CycleCategory()
@@ -216,6 +233,8 @@ public sealed class CraftUI : MonoBehaviour
             if (recipe == null || recipe.Output == null)
                 continue;
             if (_category != CraftCategory.All && recipe.Category != _category)
+                continue;
+            if (recipe.Station != _menu.Station || !_menu.Knows(recipe))
                 continue;
             _rows.Add(CreateRow(recipe));
         }
@@ -398,9 +417,9 @@ public sealed class CraftUI : MonoBehaviour
         panelRt.anchorMin = panelRt.anchorMax = new Vector2(0.5f, 0.5f);
         panelRt.anchoredPosition = Vector2.zero;
 
-        var header = CreateText(panel.transform, "Craft", 26, TextAnchor.MiddleLeft);
-        PinTop(header.rectTransform, 100f, 96f, 112f, 34f);
-        header.fontStyle = FontStyle.Bold;
+        _header = CreateText(panel.transform, "Craft", 26, TextAnchor.MiddleLeft);
+        PinTop(_header.rectTransform, 100f, 96f, 112f, 34f);
+        _header.fontStyle = FontStyle.Bold;
 
         var close = CreateButton(panel.transform, "X", new Vector2(40f, 40f), () => _menu?.Close());
         var closeRt = (RectTransform)close.transform;

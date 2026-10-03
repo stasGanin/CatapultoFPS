@@ -41,6 +41,7 @@ public class PlayerInventory : MonoBehaviour, IInventorySlots
 
     public bool BlocksGameplayInput =>
         IsDead
+        || ResearchUI.IsOpen
         || _menuOpen
         || IsCraftOpen
         || IsMageOpen
@@ -50,7 +51,8 @@ public class PlayerInventory : MonoBehaviour, IInventorySlots
         || (_building != null && _building.enabled && _building.BlocksWeapons)
         || (CastleBuild != null && CastleBuild.BlocksWeapons);
     public bool BlocksLook =>
-        _menuOpen
+        ResearchUI.IsOpen
+        || _menuOpen
         || IsCraftOpen
         || IsMageOpen
         || IsMapOpen
@@ -113,6 +115,35 @@ public class PlayerInventory : MonoBehaviour, IInventorySlots
         _slots[index] = slot;
         Changed?.Invoke();
         SelectionChanged?.Invoke();
+    }
+
+    /// <summary>ПКМ по предмету в инвентаре. Пока «использовать» умеют только рецепты (Blueprint).</summary>
+    public bool TryUseSlot(int index)
+    {
+        InventorySlot slot = GetSlot(index);
+        if (slot.IsEmpty || slot.Item.Kind != ItemKind.Blueprint)
+            return false;
+
+        CraftRecipe recipe = slot.Item.TeachesRecipe;
+        var book = GetComponent<PlayerRecipeBook>();
+        if (recipe == null || book == null)
+        {
+            Debug.LogError($"PlayerInventory: blueprint '{slot.Item.DisplayName}' has no recipe or player has no PlayerRecipeBook.", this);
+            return false;
+        }
+
+        if (!book.Learn(recipe))
+        {
+            GameMessages.Post($"Already known: {recipe.DisplayName}");
+            return false;
+        }
+
+        slot.Count--;
+        if (slot.Count <= 0)
+            slot.Clear();
+        SetSlot(index, slot);
+        GameMessages.Post($"Recipe learned: {recipe.DisplayName}");
+        return true;
     }
 
     public ItemDefinition SelectedItem

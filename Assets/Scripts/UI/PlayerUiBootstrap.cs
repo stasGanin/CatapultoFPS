@@ -53,6 +53,10 @@ public sealed class PlayerUiBootstrap : MonoBehaviour
             gameObject.AddComponent<DamageFeedbackUI>();
         if (GetComponent<CombatHud>() == null)
             gameObject.AddComponent<CombatHud>();
+        if (GetComponent<PlayerRecipeBook>() == null)
+            gameObject.AddComponent<PlayerRecipeBook>();
+        if (GetComponent<ResearchUI>() == null)
+            gameObject.AddComponent<ResearchUI>();
         GameSettings.EnsureLoaded();
 
         // Prefer scene GameUI if present; otherwise rebuild on the player (runtime fallbacks).

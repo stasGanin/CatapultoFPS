@@ -33,6 +33,7 @@ public sealed class CastleBuildController : MonoBehaviour
     int _snapZ;
     bool _hasSectionSnap;
     CarcassBay _demolishTarget;
+    StationBuildTool _stations;
     static readonly Color DemolishTint = new Color(1f, 0.3f, 0.25f, 1f);
     static Material _ghostOk;
     static Material _ghostBad;
@@ -59,6 +60,7 @@ public sealed class CastleBuildController : MonoBehaviour
             _menuUi = GetComponent<CastleModuleMenuUI>();
         if (_menuUi == null)
             _menuUi = gameObject.AddComponent<CastleModuleMenuUI>();
+        _stations = new StationBuildTool(_inventory);
     }
 
     void Update()
@@ -111,7 +113,7 @@ public sealed class CastleBuildController : MonoBehaviour
 
     void TickPlacing()
     {
-        if (_selected == null || _camera == null)
+        if ((_selected == null && !_stations.IsActive) || _camera == null)
             return;
 
         if (_input.SecondaryPressed)
@@ -123,15 +125,40 @@ public sealed class CastleBuildController : MonoBehaviour
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
             return;
 
+        if (_stations.IsActive)
+        {
+            if (_input.RotateBuildingPressed)
+                _stations.Rotate();
+            var castle = CarcassCastle.FindPlayerOwned();
+            _stations.Tick(castle, _camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f)));
+            if (_input.AttackPressed)
+                _stations.TryPlace(castle);
+            return;
+        }
+
         TickSnapAndGhost();
 
         if (_input.AttackPressed)
             TryPlace();
     }
 
+    public void SelectStation(StationDefinition definition)
+    {
+        if (definition == null)
+            return;
+        _selected = null;
+        DestroyGhost();
+        ClearHighlight();
+        _stations.Begin(definition);
+        _menuUi?.Show(false);
+        SetMode(CastleBuildMode.Placing);
+        ApplyCursor();
+    }
+
     public void SelectDemolish()
     {
         _selected = null;
+        _stations.End();
         DestroyGhost();
         ClearHighlight();
         _menuUi?.Show(false);
@@ -144,6 +171,19 @@ public sealed class CastleBuildController : MonoBehaviour
         if (_input.SecondaryPressed)
         {
             OpenMenu();
+            return;
+        }
+
+        // Станции перекрывают стены за ними: сначала проверяем их.
+        PlacedStation station = _stations.FindDemolishTarget(
+            _camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f)), _demolishRange);
+        _stations.SetDemolishTarget(station);
+        if (station != null)
+        {
+            SetDemolishTarget(null);
+            DemolishPrompt = _stations.DemolishPrompt(station);
+            if (_input.AttackPressed)
+                _stations.Demolish(station);
             return;
         }
 
@@ -230,6 +270,7 @@ public sealed class CastleBuildController : MonoBehaviour
     {
         DestroyGhost();
         ClearHighlight();
+        _stations?.End();
         _selected = null;
         _inventory?.SetMenuOpen(false);
         GetComponent<CraftMenuController>()?.Close();
@@ -243,6 +284,7 @@ public sealed class CastleBuildController : MonoBehaviour
     {
         DestroyGhost();
         ClearHighlight();
+        _stations?.End();
         _selected = null;
         _menuUi?.Show(false);
         SetMode(CastleBuildMode.Closed);
@@ -255,6 +297,7 @@ public sealed class CastleBuildController : MonoBehaviour
             return;
 
         _selected = definition;
+        _stations.End();
         _menuUi?.Show(false);
         EnsureGhost();
         SetMode(CastleBuildMode.Placing);
@@ -386,7 +429,7 @@ public sealed class CastleBuildController : MonoBehaviour
         SetGhostValid(false);
     }
 
-    static void ApplyGhostMaterials(GameObject ghost)
+    public static void ApplyGhostMaterials(GameObject ghost)
     {
         EnsureGhostMats();
         foreach (var r in ghost.GetComponentsInChildren<Renderer>(true))
@@ -429,13 +472,15 @@ public sealed class CastleBuildController : MonoBehaviour
         mat.renderQueue = 3000;
     }
 
-    void SetGhostValid(bool valid)
+    void SetGhostValid(bool valid) => TintGhost(_ghost, valid);
+
+    public static void TintGhost(GameObject ghost, bool valid)
     {
-        if (_ghost == null)
+        if (ghost == null)
             return;
         EnsureGhostMats();
         var mat = valid ? _ghostOk : _ghostBad;
-        foreach (var r in _ghost.GetComponentsInChildren<Renderer>())
+        foreach (var r in ghost.GetComponentsInChildren<Renderer>())
         {
             if (r != null)
                 r.sharedMaterial = mat;
@@ -479,6 +524,7 @@ public sealed class CastleBuildController : MonoBehaviour
         {
             DestroyGhost();
             ClearHighlight();
+            _stations?.End();
             _selected = null;
             _menuUi?.Show(false);
             _mode = CastleBuildMode.Closed;

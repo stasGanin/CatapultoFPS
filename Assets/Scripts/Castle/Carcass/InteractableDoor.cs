@@ -5,6 +5,10 @@ public sealed class InteractableDoor : MonoBehaviour, IPlayerInteractable
 {
     const float OpenAngle = 95f;
     const float Duration = 0.28f;
+    const float DoorwayDepth = 2f;
+    const float DoorwaySidePadding = 0.3f;
+    const float DoorwayFallbackHeight = 2f;
+    const float DoorwayFallbackWidth = 1.2f;
 
     Transform _leaf;
     Quaternion _closed;
@@ -63,50 +67,28 @@ public sealed class InteractableDoor : MonoBehaviour, IPlayerInteractable
         HitSparkVfx.PlayDust(p + Vector3.up * 0.2f, _isOpen ? transform.right : -transform.right, 8);
     }
 
+    /// <summary>
+    /// Хитбокс для E в проёме: по размеру створки и на метр в обе стороны от стены.
+    /// Заодно держит проход свободным — станции на сетке пола сюда не встанут.
+    /// </summary>
     void EnsureDoorwayVolume()
     {
         if (transform.Find("DoorwayVolume") != null)
             return;
 
-        Bounds b = LocalRenderBounds();
-        if (b.size.sqrMagnitude < 0.01f)
-        {
-            b = new Bounds(
-                new Vector3(0f, CarcassMetrics.WallHeight * 0.5f, 0f),
-                new Vector3(CarcassMetrics.WallThickness, CarcassMetrics.WallHeight, CarcassMetrics.WallAlong));
-        }
+        Bounds leaf = new Bounds(
+            new Vector3(0f, DoorwayFallbackHeight * 0.5f, 0f),
+            new Vector3(CarcassMetrics.WallThickness, DoorwayFallbackHeight, DoorwayFallbackWidth));
+        var filter = _leaf != null ? _leaf.GetComponentInChildren<MeshFilter>() : null;
+        if (filter != null && filter.sharedMesh != null)
+            leaf = LocalBounds(filter, transform);
 
         var go = new GameObject("DoorwayVolume");
         go.transform.SetParent(transform, false);
         var box = go.AddComponent<BoxCollider>();
         box.isTrigger = true;
-        box.center = b.center;
-        Vector3 size = b.size;
-        if (size.x <= size.z)
-            size.x += 0.8f;
-        else
-            size.z += 0.8f;
-        size.y = Mathf.Max(size.y, CarcassMetrics.WallHeight * 0.85f);
-        box.size = size;
-    }
-
-    Bounds LocalRenderBounds()
-    {
-        var rends = GetComponentsInChildren<Renderer>(true);
-        if (rends == null || rends.Length == 0)
-            return new Bounds(Vector3.zero, Vector3.zero);
-
-        Bounds b = new Bounds(transform.InverseTransformPoint(rends[0].bounds.center), Vector3.zero);
-        for (int i = 0; i < rends.Length; i++)
-        {
-            if (rends[i] == null)
-                continue;
-            Bounds wb = rends[i].bounds;
-            b.Encapsulate(transform.InverseTransformPoint(wb.min));
-            b.Encapsulate(transform.InverseTransformPoint(wb.max));
-        }
-
-        return b;
+        box.center = new Vector3(0f, leaf.size.y * 0.5f, leaf.center.z);
+        box.size = new Vector3(DoorwayDepth, leaf.size.y, leaf.size.z + DoorwaySidePadding);
     }
 
     /// <summary>

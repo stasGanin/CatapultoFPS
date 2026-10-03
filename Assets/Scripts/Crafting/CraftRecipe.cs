@@ -28,6 +28,10 @@ public sealed class CraftRecipe : ScriptableObject
     [SerializeField] ItemDefinition _output;
     [SerializeField, Min(1)] int _outputCount = 1;
     [SerializeField] CraftIngredient[] _ingredients;
+    [Tooltip("Где крафтится: Hand — меню C, остальное — на поставленной станции.")]
+    [SerializeField] CraftStation _station = CraftStation.Hand;
+    [Tooltip("Закрыт, пока не изучен на изучалке или по выпавшему рецепту.")]
+    [SerializeField] bool _requiresUnlock;
 
     public string Id => _id;
     public string DisplayName => string.IsNullOrEmpty(_displayName) && _output != null
@@ -46,4 +50,6 @@ public sealed class CraftRecipe : ScriptableObject
     public ItemDefinition Output => _output;
     public int OutputCount => Mathf.Max(1, _outputCount);
     public CraftIngredient[] Ingredients => _ingredients ?? Array.Empty<CraftIngredient>();
+    public CraftStation Station => _station;
+    public bool RequiresUnlock => _requiresUnlock;
 }

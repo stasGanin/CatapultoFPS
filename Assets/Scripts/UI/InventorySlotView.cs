@@ -136,6 +136,14 @@ public class InventorySlotView : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (eventData.button == PointerEventData.InputButton.Right)
+        {
+            // ПКМ = «использовать». Только из своего инвентаря, не из сундука.
+            if (_host is PlayerInventory own && own.TryUseSlot(_slotIndex))
+                InventoryTooltip.Hide();
+            return;
+        }
+
         if (eventData.button != PointerEventData.InputButton.Left)
             return;
 

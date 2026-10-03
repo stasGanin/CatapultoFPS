@@ -96,7 +96,7 @@ public sealed class SettingsMenuUI : MonoBehaviour
         if (_inventory.IsMenuOpen || _inventory.IsCraftOpen || _inventory.IsMageOpen || WorldMapUI.IsOpen)
             return true;
 
-        if (_inventory.IsFurniturePlacing)
+        if (_inventory.IsFurniturePlacing || ResearchUI.IsOpen)
             return true;
 
         // Учитываем и режим установки: иначе Esc одновременно отменяет призрак и ставит паузу.

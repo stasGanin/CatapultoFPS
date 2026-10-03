@@ -86,7 +86,7 @@ public sealed class CastleModuleMenuUI : MonoBehaviour
         _root.transform.SetParent(_canvasGo.transform, false);
         var rt = (RectTransform)_root.transform;
         rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
-        rt.sizeDelta = new Vector2(420f, 280f);
+        rt.sizeDelta = new Vector2(600f, 400f);
         var bg = _root.AddComponent<Image>();
         bg.color = new Color(0.08f, 0.09f, 0.11f, 0.96f);
 
@@ -105,7 +105,7 @@ public sealed class CastleModuleMenuUI : MonoBehaviour
         stoneRt.anchoredPosition = new Vector2(-16f, -16f);
         stoneRt.sizeDelta = new Vector2(140f, 28f);
 
-        var hint = CreateText(_root.transform, "LMB select · RMB / Esc close", 14, TextAnchor.LowerCenter);
+        var hint = CreateText(_root.transform, "LMB select · R rotate station · RMB / Esc close", 14, TextAnchor.LowerCenter);
         hint.color = new Color(0.7f, 0.7f, 0.7f);
         var hintRt = hint.rectTransform;
         hintRt.anchorMin = new Vector2(0f, 0f);
@@ -119,7 +119,7 @@ public sealed class CastleModuleMenuUI : MonoBehaviour
         var gridRt = (RectTransform)gridGo.transform;
         gridRt.anchorMin = gridRt.anchorMax = new Vector2(0.5f, 0.5f);
         gridRt.anchoredPosition = new Vector2(0f, 8f);
-        gridRt.sizeDelta = new Vector2(360f, 140f);
+        gridRt.sizeDelta = new Vector2(540f, 252f);
         var grid = gridGo.AddComponent<GridLayoutGroup>();
         grid.cellSize = new Vector2(96f, 96f);
         grid.spacing = new Vector2(12f, 12f);
@@ -130,6 +130,9 @@ public sealed class CastleModuleMenuUI : MonoBehaviour
             if (_modules[i] != null)
                 CreateIcon(gridGo.transform, _modules[i]);
         }
+
+        foreach (var station in LoadStations())
+            CreateStationIcon(gridGo.transform, station);
 
         CreateDemolishIcon(gridGo.transform);
     }
@@ -179,6 +182,45 @@ public sealed class CastleModuleMenuUI : MonoBehaviour
         }
 
         return null;
+    }
+
+    static StationDefinition[] LoadStations()
+    {
+        var stations = Resources.LoadAll<StationDefinition>("Castle/Stations");
+        System.Array.Sort(stations, (a, b) => a.Kind.CompareTo(b.Kind));
+        return stations;
+    }
+
+    void CreateStationIcon(Transform parent, StationDefinition def)
+    {
+        var go = new GameObject(def.Id, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        go.transform.SetParent(parent, false);
+        var img = go.GetComponent<Image>();
+        img.color = def.IconColor;
+
+        var name = CreateText(go.transform, def.DisplayName, 13, TextAnchor.UpperCenter);
+        var nrt = name.rectTransform;
+        nrt.anchorMin = new Vector2(0f, 1f);
+        nrt.anchorMax = new Vector2(1f, 1f);
+        nrt.pivot = new Vector2(0.5f, 1f);
+        nrt.anchoredPosition = new Vector2(0f, -4f);
+        nrt.sizeDelta = new Vector2(-6f, 20f);
+
+        var cost = CreateText(go.transform, def.CostLabel(), 11, TextAnchor.LowerCenter);
+        var crt = cost.rectTransform;
+        crt.anchorMin = Vector2.zero;
+        crt.anchorMax = new Vector2(1f, 0.7f);
+        crt.offsetMin = new Vector2(3f, 4f);
+        crt.offsetMax = new Vector2(-3f, 0f);
+
+        var btn = go.GetComponent<Button>();
+        btn.targetGraphic = img;
+        btn.onClick.AddListener(() =>
+        {
+            if (_controller == null)
+                _controller = FindFirstObjectByType<CastleBuildController>();
+            _controller?.SelectStation(def);
+        });
     }
 
     void CreateDemolishIcon(Transform parent)

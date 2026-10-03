@@ -113,6 +113,8 @@ public sealed class InventoryTooltip : MonoBehaviour
                 return "Resource";
             case ItemKind.Furniture:
                 return "Furniture";
+            case ItemKind.Blueprint:
+                return "Blueprint  ·  RMB to learn";
             default:
                 return "Item";
         }

@@ -21,3 +21,5 @@ MonoBehaviour:
   _ingredients:
   - Item: {fileID: 11400000, guid: d9e0f1a2b3c4d5e6f708192a3b4c5d14, type: 2}
     Count: 3
+  _station: 2
+  _requiresUnlock: 0

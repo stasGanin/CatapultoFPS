@@ -22,6 +22,10 @@ public static class LootDrop
     {
         Spawn(Chronum(), 3, position);
         Spawn(Metal(), 5, position);
+        // По T1-спеке маг гарантированно роняет рецепт; пока в пуле один.
+        var blueprint = Resources.Load<ItemDefinition>("Items/EmberLauncherBlueprintItem");
+        if (blueprint != null)
+            Spawn(blueprint, 1, position);
     }
 
     public static void Brute(Vector3 position)

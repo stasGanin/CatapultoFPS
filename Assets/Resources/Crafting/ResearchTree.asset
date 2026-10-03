@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d6d37fa53bd4974ba93e07c2ed4be9f, type: 3}
+  m_Name: ResearchTree
+  m_EditorClassIdentifier: Assembly-CSharp::ResearchTree
+  _nodes:
+  - {fileID: 11400000, guid: cc3d412f2afc38c489f45fc49a6aed2e, type: 2}
+  - {fileID: 11400000, guid: 002e4c7c467b640428bcc448a684d24b, type: 2}

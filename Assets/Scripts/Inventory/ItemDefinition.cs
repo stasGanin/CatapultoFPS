@@ -13,6 +13,8 @@ public class ItemDefinition : ScriptableObject
     [SerializeField] Sprite _icon;
     [SerializeField] int _maxStack = 1;
     [SerializeField, TextArea(2, 4)] string _description;
+    [Tooltip("Только для Blueprint: какой рецепт изучается по ПКМ в инвентаре.")]
+    [SerializeField] CraftRecipe _teachesRecipe;
 
     public string Id => _id;
     public string DisplayName => _displayName;
@@ -20,6 +22,7 @@ public class ItemDefinition : ScriptableObject
     public Color IconColor => _iconColor;
     public int MaxStack => Mathf.Max(1, _maxStack);
     public string Description => _description ?? string.Empty;
+    public CraftRecipe TeachesRecipe => _teachesRecipe;
     public bool IsEquippableTool =>
         _kind == ItemKind.HandCannon || _kind == ItemKind.Pickaxe || _kind == ItemKind.Crossbow
         || _kind == ItemKind.Staff || _kind == ItemKind.Scattergun || _kind == ItemKind.EmberLauncher;
