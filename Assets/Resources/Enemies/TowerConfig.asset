@@ -25,7 +25,7 @@ MonoBehaviour:
   _telegraphTime: 0.45
   _burstCount: 1
   _burstInterval: 0.16
-  _cooldown: 3
-  _cooldownJitter: 0.5
+  _cooldown: 0.6
+  _cooldownJitter: 0.1
   _projectileSpeed: 24
   _leadFactor: 0.35

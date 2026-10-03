@@ -10,6 +10,8 @@ public class Cannonball : MonoBehaviour
     float _explosionForce;
     float _lifetime;
     bool _detonated;
+    // > 0 — выстрел вражеской башни: бьёт игрока и его замок фиксированным уроном, чужие стены не рвёт.
+    float _enemyDamage;
     Rigidbody _body;
     GameObject _impactVisual;
 
@@ -27,7 +29,7 @@ public class Cannonball : MonoBehaviour
     /// Спавнит физическое ядро. Общий для ручной пушки и башни; <paramref name="ignored"/> — коллайдеры стрелка,
     /// о которые ядро не должно взрываться на старте.
     /// </summary>
-    public static void Launch(WeaponConfig config, Vector3 origin, Vector3 direction, params Collider[] ignored)
+    public static Cannonball Launch(WeaponConfig config, Vector3 origin, Vector3 direction, params Collider[] ignored)
     {
         float diameter = config.ProjectileRadius * 2f;
 
@@ -70,7 +72,10 @@ public class Cannonball : MonoBehaviour
 
         if (config.ProjectileVisual == null)
             ApplyColor(ball, new Color(0.12f, 0.12f, 0.14f));
+        return projectile;
     }
+
+    public void MarkEnemyShot(float damage) => _enemyDamage = damage;
 
     static void ApplyColor(GameObject target, Color color)
     {
@@ -119,6 +124,14 @@ public class Cannonball : MonoBehaviour
             }
 
             _body.isKinematic = true;
+        }
+
+        if (_enemyDamage > 0f)
+        {
+            DamageUtility.ApplyInRadius(point, Mathf.Max(_blastRadius, 0.75f), _enemyDamage, outward, fromPlayer: false);
+            ProjectileVfx.SpawnImpact(_impactVisual, point, outward, other.transform);
+            Destroy(gameObject, 0.02f);
+            return;
         }
 
         var hitChunk = other.GetComponentInParent<CastleWallChunk>();

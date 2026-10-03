@@ -2,21 +2,25 @@ using UnityEngine;
 
 /// <summary>
 /// Автоогонь вражеской башни: бьёт по игроку, если виден, иначе по нашему замку.
-/// Включается кнопкой F7 (<see cref="EnemySpawnDebugHud"/>). Стреляет болтами врага (урон «не от игрока»), баланс — в Resources/Enemies/TowerConfig.
+/// Включается кнопкой F7 (<see cref="EnemySpawnDebugHud"/>). Стреляет ядрами (урон «не от игрока»): темп и урон — Enemies/TowerConfig, вид и скорость ядра — CannonTowerConfig.
 /// </summary>
 public sealed class EnemyTowerFire : MonoBehaviour
 {
     const string ConfigPath = "Enemies/TowerConfig";
+    const string ShotConfigPath = "Castle/Towers/CannonTowerConfig";
 
     CastleTower _tower;
     EnemyConfig _config;
+    WeaponConfig _shotConfig;
+    Collider[] _ownColliders;
     float _nextFireTime;
 
     void Awake()
     {
         _tower = GetComponent<CastleTower>();
         _config = EnemyConfig.Load(ConfigPath);
-        if (_tower == null || _config == null)
+        _shotConfig = Resources.Load<WeaponConfig>(ShotConfigPath);
+        if (_tower == null || _config == null || _shotConfig == null)
         {
             Debug.LogError("EnemyTowerFire: нет башни или Resources/Enemies/TowerConfig.", this);
             enabled = false;
@@ -29,13 +33,16 @@ public sealed class EnemyTowerFire : MonoBehaviour
             return;
 
         Vector3 origin = _tower.Muzzle.position;
-        Vector3 direction = (point - origin).normalized;
+        Vector3 direction = TowerBallistics.LobDirection(origin, point, _shotConfig.MuzzleSpeed);
         _tower.AimAt(direction);
         if (Time.time < _nextFireTime)
             return;
 
         _nextFireTime = Time.time + _config.RollCooldown();
-        EnemyProjectile.Spawn(origin, direction, _config.ProjectileSpeed, _config.Damage, gameObject, homeOnPlayer: false);
+        // Колайдеры своего замка игнорируем, иначе ядро взорвётся о зубцы у самой башни.
+        _ownColliders ??= _tower.Castle.GetComponentsInChildren<Collider>();
+        ProjectileVfx.SpawnMuzzleFlash(_shotConfig.MuzzleFlash, _tower.Muzzle, origin, direction);
+        Cannonball.Launch(_shotConfig, origin, direction, _ownColliders).MarkEnemyShot(_config.Damage);
     }
 
     bool TryPickTarget(out Vector3 point)

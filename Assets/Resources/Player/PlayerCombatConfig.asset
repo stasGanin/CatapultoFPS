@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f96b98709fae45de98010c0aa84c0323, type: 3}
   m_Name: PlayerCombatConfig
   m_EditorClassIdentifier: 
-  _maxHealth: 100
+  _maxHealth: 1000
   _respawnDelay: 4
