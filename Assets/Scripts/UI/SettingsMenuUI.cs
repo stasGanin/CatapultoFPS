@@ -21,6 +21,7 @@ public sealed class SettingsMenuUI : MonoBehaviour
     Text _fullLabel;
     Text _qualityLabel;
     Text _uiScaleValue;
+    Text _damageNumbersLabel;
     bool _open;
     bool _blockedLastFrame;
     float _timeScaleBefore = 1f;
@@ -174,6 +175,8 @@ public sealed class SettingsMenuUI : MonoBehaviour
             _fullLabel.text = GameSettings.Fullscreen ? "On" : "Off";
         if (_qualityLabel != null)
             _qualityLabel.text = GameSettings.QualityName;
+        if (_damageNumbersLabel != null)
+            _damageNumbersLabel.text = GameSettings.ShowDamageNumbers ? "On" : "Off";
         if (_uiScaleValue != null)
             _uiScaleValue.text = Mathf.RoundToInt(GameSettings.UiScale * 100f) + "%";
     }
@@ -202,7 +205,7 @@ public sealed class SettingsMenuUI : MonoBehaviour
         panel.transform.SetParent(_root.transform, false);
         var panelRt = (RectTransform)panel.transform;
         panelRt.anchorMin = panelRt.anchorMax = new Vector2(0.5f, 0.5f);
-        panelRt.sizeDelta = new Vector2(580f, 710f);
+        panelRt.sizeDelta = new Vector2(580f, 770f);
         var panelImg = panel.AddComponent<Image>();
         InventoryUiTheme.StylePanel(panelImg);
 
@@ -235,6 +238,9 @@ public sealed class SettingsMenuUI : MonoBehaviour
         _uiScaleValue = AddStepper(panel.transform, "UI size", y,
             () => GameSettings.SetUiScale(GameSettings.UiScale - 0.05f),
             () => GameSettings.SetUiScale(GameSettings.UiScale + 0.05f));
+        y += 70f;
+        _damageNumbersLabel = AddToggle(panel.transform, "Damage numbers", y,
+            () => GameSettings.SetShowDamageNumbers(!GameSettings.ShowDamageNumbers));
 
         var close = CreateButton(panel.transform, "Resume  [Esc]", new Vector2(280f, 46f), Close);
         var closeRt = (RectTransform)close.transform;

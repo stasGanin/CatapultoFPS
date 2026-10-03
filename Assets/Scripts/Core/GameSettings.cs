@@ -9,6 +9,7 @@ public static class GameSettings
     const string VolumeKey = "catapulto.settings.volume";
     const string FullscreenKey = "catapulto.settings.fullscreen";
     const string QualityKey = "catapulto.settings.quality";
+    const string DamageNumbersKey = "catapulto.settings.damage_numbers";
 
     const float DefaultSensitivity = 0.15f;
     const float DefaultFov = 75f;
@@ -28,6 +29,7 @@ public static class GameSettings
     public static bool Fullscreen { get; private set; } = true;
     public static int QualityLevel { get; private set; }
     public static float UiScale { get; private set; } = MaxUiScale;
+    public static bool ShowDamageNumbers { get; private set; } = true;
 
     public static void EnsureLoaded()
     {
@@ -40,6 +42,7 @@ public static class GameSettings
         MasterVolume = PlayerPrefs.GetFloat(VolumeKey, DefaultVolume);
         Fullscreen = PlayerPrefs.GetInt(FullscreenKey, Screen.fullScreen ? 1 : 0) != 0;
         QualityLevel = PlayerPrefs.GetInt(QualityKey, QualitySettings.GetQualityLevel());
+        ShowDamageNumbers = PlayerPrefs.GetInt(DamageNumbersKey, 1) != 0;
         // Каждый запуск начинаем с максимального масштаба; слайдер меняет его до перезапуска.
         UiScale = MaxUiScale;
         Apply();
@@ -62,6 +65,13 @@ public static class GameSettings
     {
         InvertY = value;
         PlayerPrefs.SetInt(InvertKey, value ? 1 : 0);
+        Save();
+    }
+
+    public static void SetShowDamageNumbers(bool value)
+    {
+        ShowDamageNumbers = value;
+        PlayerPrefs.SetInt(DamageNumbersKey, value ? 1 : 0);
         Save();
     }
 

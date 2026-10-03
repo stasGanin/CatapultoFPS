@@ -142,7 +142,6 @@ public class Cannonball : MonoBehaviour
         DamageUtility.ApplyInRadius(point, Mathf.Max(_blastRadius, 0.75f), unitDamage, outward);
 
         ProjectileVfx.SpawnImpact(_impactVisual, point, outward, other.transform);
-        BlastRadiusFlash.Spawn(point, _blastRadius);
         Destroy(gameObject, 0.02f);
     }
 }
