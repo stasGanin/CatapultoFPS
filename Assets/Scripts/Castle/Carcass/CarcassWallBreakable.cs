@@ -108,6 +108,25 @@ public sealed class CarcassWallBreakable : MonoBehaviour, IDamageable
             LootDrop.Module(_module.Kind, AimPoint);
     }
 
+    /// <summary>Смерть мага: стена целиком рассыпается на куски, даже если по ней ни разу не попали.</summary>
+    public void Collapse(Vector3 blastPoint, float impulse)
+    {
+        if (_breached)
+            return;
+        if (!_shattered)
+            Shatter();
+        _breached = true;
+
+        for (int i = 0; i < _chunks.Count; i++)
+        {
+            var chunk = _chunks[i];
+            if (chunk == null || chunk.IsDetached)
+                continue;
+            Vector3 outward = chunk.transform.position - blastPoint;
+            chunk.Detach(chunk.transform.position, outward, impulse);
+        }
+    }
+
     public void OnRepaired()
     {
         _breached = false;

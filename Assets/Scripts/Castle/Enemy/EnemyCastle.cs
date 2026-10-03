@@ -5,6 +5,8 @@ using UnityEngine;
 public sealed class EnemyCastle : MonoBehaviour
 {
     [SerializeField] EnemyCastleMage _mage;
+    const float CollapseImpulse = 4.2f;
+
     readonly List<Transform> _collapsePieces = new();
     readonly List<MonoBehaviour> _spawnModules = new();
     bool _collapsed;
@@ -39,6 +41,11 @@ public sealed class EnemyCastle : MonoBehaviour
         Vector3 blast = info.Point.sqrMagnitude > 0.01f ? info.Point : transform.position + Vector3.up;
         CastleMagicBlast.Spawn(transform.position + Vector3.up * 2f, 16f);
 
+        // Целые стены каркаса ещё не нарезаны на куски — режем и обрушиваем их все.
+        var carcassWalls = GetComponentsInChildren<CarcassWallBreakable>(true);
+        for (int i = 0; i < carcassWalls.Length; i++)
+            carcassWalls[i].Collapse(blast, CollapseImpulse);
+
         var modules = GetComponentsInChildren<CastleModuleRoot>(true);
         if (modules.Length > 0)
         {
@@ -49,7 +56,7 @@ public sealed class EnemyCastle : MonoBehaviour
                 if (chunk == null || chunk.IsDetached)
                     continue;
                 Vector3 outward = chunk.transform.position - blast;
-                chunk.Detach(chunk.transform.position, outward, 4.2f);
+                chunk.Detach(chunk.transform.position, outward, CollapseImpulse);
             }
         }
         else

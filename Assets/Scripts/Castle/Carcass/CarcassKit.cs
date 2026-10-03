@@ -222,9 +222,9 @@ public static class CarcassKit
         _corner = CaptureNamed(CarcassPath, "Column", "Corner") ?? FallbackBox("Column", new Vector3(1f, 3.36f, 1f));
         _floor = CaptureNamed(CarcassPath, "Floor", "Floor") ?? FallbackBox("Floor", new Vector3(14f, 0.37f, 14f));
         _roof = CaptureNamed(CarcassPath, "Roof", "Roof") ?? FallbackBox("Roof", new Vector3(14f, 0.37f, 14f));
-        _wall = CaptureRoot(WallPath, "WallSolid") ?? FallbackBox("WallSolid", new Vector3(1f, 3.36f, 6f));
-        _window = CaptureRoot(WindowPath, "WallWindow") ?? FallbackBox("WallWindow", new Vector3(1f, 3.36f, 6f));
-        _door = CaptureRoot(DoorPath, "WallDoor") ?? FallbackDoor();
+        _wall = CaptureWall(WallPath, "WallSolid") ?? FallbackBox("WallSolid", new Vector3(1f, 3.36f, 6f));
+        _window = CaptureWall(WindowPath, "WallWindow") ?? FallbackBox("WallWindow", new Vector3(1f, 3.36f, 6f));
+        _door = CaptureWall(DoorPath, "WallDoor") ?? FallbackDoor();
         _merlon = CaptureNamed(MerlonPath, "Merlon", "T2", "T1", "CornerT")
                   ?? FallbackBox("Merlon", new Vector3(1f, 0.64f, 1.5f));
         _wallBroken = PrepareBroken(WallBrokenPath, "WallSolidBroken");
@@ -255,7 +255,7 @@ public static class CarcassKit
     /// <summary>Тот же пайплайн, что и у целых стен, чтобы куски совпали с целой моделью.</summary>
     static GameObject PrepareBroken(string resourcePath, string cloneName)
     {
-        GameObject go = CaptureRoot(resourcePath, cloneName);
+        GameObject go = CaptureWall(resourcePath, cloneName);
         if (go == null)
             return null;
         go = OrientAlongZ(RecenterBottom(go));
@@ -278,7 +278,11 @@ public static class CarcassKit
         return clone;
     }
 
-    static GameObject CaptureRoot(string resourcePath, string cloneName)
+    /// <summary>
+    /// Модуль стены подгоняется по высоте стены, а не общим множителем кита: файлы стен приходят
+    /// в разных масштабах (старая дверь — 1/100, новые стены — 1/3, внутри разрушенных — 33.33 у детей).
+    /// </summary>
+    static GameObject CaptureWall(string resourcePath, string cloneName)
     {
         var prefab = Resources.Load<GameObject>(resourcePath);
         if (prefab == null)
@@ -287,8 +291,20 @@ public static class CarcassKit
         GameObject instance = UnityEngine.Object.Instantiate(prefab);
         instance.name = cloneName;
         StripImportJunk(instance);
-        ApplyMeterScale(instance);
+        FitHeight(instance, CarcassMetrics.WallHeight);
         return instance;
+    }
+
+    static void FitHeight(GameObject root, float targetHeight)
+    {
+        float height = EncapsulateWorld(root).size.y;
+        if (height < 1e-4f)
+        {
+            Debug.LogError($"CarcassKit: '{root.name}' has no renderable height — scale left as imported.");
+            return;
+        }
+
+        root.transform.localScale *= targetHeight / height;
     }
 
     static void ApplyMeterScale(GameObject root)
